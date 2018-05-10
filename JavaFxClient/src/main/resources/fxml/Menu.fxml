@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import de.jensd.fx.glyphs.fontawesome.FontAwesomeIconView?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="pe.mrodas.controller.MenuController">
+    <center>
+        <VBox alignment="CENTER" spacing="7.0">
+            <children>
+                <HBox alignment="CENTER" spacing="7.0">
+                    <children>
+                        <Button contentDisplay="TOP" layoutX="10.0" layoutY="10.0" mnemonicParsing="false"
+                                onAction="#btnGalleryOnClick" text="Gallery">
+                            <graphic>
+                                <FontAwesomeIconView glyphName="IMAGE" size="40"/>
+                            </graphic>
+                        </Button>
+                        <Button contentDisplay="TOP" layoutX="66.0" layoutY="10.0" mnemonicParsing="false"
+                                onAction="#btnImportOnClick" text="Import">
+                            <graphic>
+                                <FontAwesomeIconView glyphName="UPLOAD" size="40"/>
+                            </graphic>
+                        </Button>
+                    </children>
+                </HBox>
+            </children>
+            <padding>
+                <Insets bottom="7.0" left="7.0" right="7.0" top="5.0"/>
+            </padding>
+        </VBox>
+    </center>
+</BorderPane>
