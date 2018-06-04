@@ -1,13 +1,21 @@
 package pe.mrodas.helper;
 
+import javafx.event.ActionEvent;
+import javafx.scene.Node;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
+import javafx.stage.Window;
 import lombok.experimental.UtilityClass;
 
 @UtilityClass
-public class GuiHelper {
+public class GuiFxHelper {
 
     public boolean isPrimaryDoubleClick(MouseEvent e){
         return e.getButton() == MouseButton.PRIMARY && e.getClickCount() == 2;
+    }
+
+    public Window getOwner(ActionEvent actionEvent) {
+        Node source = (Node) actionEvent.getSource();
+        return source.getScene().getWindow();
     }
 }
