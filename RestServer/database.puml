@@ -1,0 +1,144 @@
+@startuml
+' see: http://plantuml.com/classes.html#More
+skinparam LineType ortho
+skinparam Shadowing false
+skinparam Class {
+    HeaderBackgroundColor #98BFDA
+	BackgroundColor White
+	BorderColor #808080
+	ArrowColor #8c8c8c
+}
+!define TABLE(name) class name
+!define PK(x) <color:#f0c314><&key></color>**x**
+!define FK(x) <color:#dd776c><&key></color>**x**
+!define UNIQUE(x) <color:#fe5a63><&underline></color>x
+!define VARCHAR(size) {field}VARCHAR(size)
+!define CHAR(size) {field}CHAR(size)
+!define NOT_NULL(x) <size:9>not null</size>
+hide methods
+hide stereotypes
+hide circle
+
+TABLE(profile){
+  PK(idProfile) TINYINT(3) NOT_NULL()
+  name VARCHAR(50) NOT_NULL()
+}
+
+TABLE(person){
+  PK(idPerson) INTEGER NOT_NULL()
+  firstname VARCHAR(150)
+  lastname VARCHAR(150)
+  identityCode VARCHAR(20)
+  address VARCHAR(150)
+  phone VARCHAR(20)
+  cellphone VARCHAR(20)
+  mail VARCHAR(100)
+}
+
+TABLE(user){
+  PK(idUser) INTEGER NOT_NULL()
+  UNIQUE(username) VARCHAR(100) NOT_NULL()
+  password VARCHAR(90) NOT_NULL()
+  token VARCHAR(50)
+  FK(idPerson) INTEGER NOT_NULL()
+  FK(idProfile) TINYINT(3) NOT_NULL()
+}
+
+user }-- person
+user }-- profile
+
+TABLE(config){
+  UNIQUE(sysUserName) VARCHAR(150) NOT_NULL()
+  UNIQUE(sysOsName) VARCHAR(150) NOT_NULL()
+  UNIQUE(sysHostName) VARCHAR(200) NOT_NULL()
+  workingDir VARCHAR(400) NOT_NULL()
+  FK(idCreator) INTEGER NOT_NULL()
+  CONSTRAINT FK_configuracion_user FK(idCreator) REFERENCES user(idUser)
+}
+
+config }-- user
+
+TABLE(functionality){
+  PK(idFunctionality) INTEGER NOT_NULL()
+  name VARCHAR(150) NOT_NULL()
+}
+
+TABLE(functionality_x_profile){
+  FK(idProfile) TINYINT(3) NOT_NULL()
+  FK(idFunctionality) INTEGER NOT_NULL()
+}
+
+functionality_x_profile }-- profile
+functionality_x_profile }-- functionality
+
+newpage
+skinparam LineType ortho
+skinparam Shadowing false
+skinparam Class {
+    HeaderBackgroundColor #98BFDA
+	BackgroundColor White
+	BorderColor #808080
+	ArrowColor #8c8c8c
+}
+!define TABLE(name) class name
+!define PK(x) <color:#f0c314><&key></color>**x**
+!define FK(x) <color:#dd776c><&key></color>**x**
+!define UNIQUE(x) <color:#fe5a63><&underline></color>x
+!define VARCHAR(size) {field}VARCHAR(size)
+!define CHAR(size) {field}CHAR(size)
+!define NOT_NULL(x) <size:9>not null</size>
+hide methods
+hide stereotypes
+hide circle
+
+title File Collection Database
+
+TABLE(root){
+    PK(idRoot) INTEGER NOT_NULL()
+    UNIQUE(name) VARCHAR(50) NOT_NULL()
+}
+
+TABLE(file_item){
+  PK(idFile) INTEGER NOT_NULL()
+  FK(idType) INTEGER NOT_NULL()
+  UNIQUE(md5) CHAR(32) NOT_NULL()
+  extension VARCHAR(10) NOT_NULL()
+  creation datetime NOT_NULL()
+}
+
+file_item }-- type
+
+TABLE(file_content){
+  FK(idFile) INTEGER NOT_NULL()
+  content MEDIUMBLOB NOT_NULL()
+}
+
+file_content }-- file_item
+
+TABLE(type){
+    PK(idType) INTEGER NOT_NULL()
+    FK(idRoot) INTEGER NOT_NULL()
+    UNIQUE(name) VARCHAR(50) NOT_NULL()
+}
+
+type }-- root
+
+TABLE(tag){
+  PK(idTag) INTEGER NOT_NULL()
+  FK(idRoot) INTEGER NOT_NULL()
+  UNIQUE(name) VARCHAR(50) NOT_NULL()
+}
+
+tag }-- root
+
+TABLE(file_x_tag){
+  FK(idFile) INTEGER NOT_NULL()
+  FK(idTag) INTEGER NOT_NULL()
+}
+
+file_x_tag }-- file_item
+file_x_tag }-- tag
+
+
+
+@enduml
