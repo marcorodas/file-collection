@@ -1,4 +1,4 @@
-package pe.mrodas.services;
+package pe.mrodas.service;
 
 import pe.mrodas.entity.Credential;
 import pe.mrodas.entity.User;

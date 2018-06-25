@@ -100,13 +100,10 @@ TABLE(root){
 
 TABLE(file_item){
   PK(idFile) INTEGER NOT_NULL()
-  FK(idType) INTEGER NOT_NULL()
   UNIQUE(md5) CHAR(32) NOT_NULL()
   extension VARCHAR(10) NOT_NULL()
   creation datetime NOT_NULL()
 }
-
-file_item }-- type
 
 TABLE(file_content){
   FK(idFile) INTEGER NOT_NULL()
@@ -114,14 +111,6 @@ TABLE(file_content){
 }
 
 file_content }-- file_item
-
-TABLE(type){
-    PK(idType) INTEGER NOT_NULL()
-    FK(idRoot) INTEGER NOT_NULL()
-    UNIQUE(name) VARCHAR(50) NOT_NULL()
-}
-
-type }-- root
 
 TABLE(tag){
   PK(idTag) INTEGER NOT_NULL()
@@ -139,6 +128,12 @@ TABLE(file_x_tag){
 file_x_tag }-- file_item
 file_x_tag }-- tag
 
+TABLE(type){
+    FK(idTag) INTEGER NOT_NULL()
+    FK(idRoot) INTEGER NOT_NULL()
+}
 
+type }-- tag
+type }-- root
 
 @enduml

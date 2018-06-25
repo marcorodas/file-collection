@@ -1,4 +1,4 @@
-package pe.mrodas;
+package pe.mrodas.service.config;
 
 import pe.mrodas.model.UserDA;
 

@@ -1,12 +1,13 @@
 package pe.mrodas.model;
 
 import lombok.experimental.UtilityClass;
+import org.apache.commons.codec.digest.DigestUtils;
 import pe.mrodas.entity.*;
 import pe.mrodas.jdbc.Adapter;
 import pe.mrodas.jdbc.SqlQuery;
-import org.apache.commons.codec.digest.DigestUtils;
 import pe.mrodas.jdbc.SqlUpdate;
 
+import javax.ws.rs.NotAuthorizedException;
 import java.sql.Connection;
 import java.util.List;
 
@@ -16,7 +17,7 @@ public class UserDA {
     private int getUserId(Credential credential) throws Exception {
         String password = credential.getPassword();
         return new SqlQuery<Integer>()
-                .setSql("SELECT idUser FROM usuario WHERE username = :user AND password = :pass")
+                .setSql("SELECT idUser FROM user WHERE username = :user AND password = :pass")
                 .addParameter("user", credential.getUsername())
                 .addParameter("pass", DigestUtils.sha256Hex(password))
                 .execute(rs -> rs.next() ? rs.getInt("idUser") : 0);
@@ -28,9 +29,16 @@ public class UserDA {
      */
     public int validateToken(String token) throws Exception {
         if (token == null) {
-            throw new Exception("Invalid token!");
+            throw new NotAuthorizedException("Invalid 'null' token!");
         }
-        return 0;
+        int idUser = new SqlQuery<Integer>()
+                .setSql("SELECT idUser FROM user WHERE token = :token")
+                .addParameter("token", token)
+                .execute(rs -> rs.next() ? rs.getInt("idUser") : 0);
+        if (idUser > 0) {
+            return idUser;
+        }
+        throw new NotAuthorizedException("Invalid token!");
     }
 
     private void updateToken(Connection connection, User user) throws Exception {
@@ -44,7 +52,7 @@ public class UserDA {
     public User authenticateUser(Credential credential) throws Exception {
         int idUsuario = UserDA.getUserId(credential);
         if (idUsuario == 0) {
-            throw new Exception("Invalid user!");
+            throw new NotAuthorizedException("Invalid user!");
         }
         return Adapter.batch(connection -> {
             User user = UserDA.getUserProfile(connection, idUsuario);
