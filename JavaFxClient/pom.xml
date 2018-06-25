@@ -126,12 +126,6 @@
             <artifactId>controlsfx</artifactId>
             <version>8.40.14</version>
         </dependency>
-        <!-- Bridge: A HTTP client -->
-        <dependency>
-            <groupId>com.github.afollestad</groupId>
-            <artifactId>bridge</artifactId>
-            <version>5.1.1</version>
-        </dependency>
         <!-- Retrofit: Http client -->
         <dependency>
             <groupId>com.squareup.retrofit2</groupId>
