@@ -3,18 +3,18 @@ package pe.mrodas.controller;
 import com.jfoenix.controls.JFXProgressBar;
 import javafx.beans.property.BooleanProperty;
 import javafx.concurrent.Service;
-import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.Separator;
 import javafx.scene.control.TextField;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
-import lombok.Setter;
-import pe.mrodas.helper.GuiFxHelper;
-import pe.mrodas.helper.TaskImportFiles;
+import javafx.stage.Window;
+import pe.mrodas.entity.MenuEnum;
+import pe.mrodas.worker.ServiceImportFiles;
 
 import java.io.File;
 import java.util.List;
@@ -32,21 +32,12 @@ public class GalleryController extends BaseController {
     @FXML
     public Separator separator;
 
-    private ImportFilesService importFilesService;
+    private ServiceImportFiles serviceImportFiles;
+    private final MenuEnum selected;
 
-    private class ImportFilesService extends Service<Void> {
-
-        @Setter
-        private List<File> fileList;
-
-        @Override
-        protected Task<Void> createTask() {
-            return new TaskImportFiles(fileList);
-        }
-    }
-
-    public GalleryController() {
+    public GalleryController(MenuEnum selected) {
         super("/fxml/Gallery.fxml");
+        this.selected = selected;
     }
 
     @Override
@@ -55,43 +46,37 @@ public class GalleryController extends BaseController {
     }
 
     private void setServices() {
-        importFilesService = new ImportFilesService();
+        serviceImportFiles = new ServiceImportFiles();
+        this.bindProgressProperties(serviceImportFiles);
+        txtService.textProperty().bind(serviceImportFiles.messageProperty());
+        progressBar.progressProperty().bind(serviceImportFiles.progressProperty());
+    }
+
+    private void bindProgressProperties(Service<?> service) {
         BooleanProperty[] properties = new BooleanProperty[]{
                 txtService.visibleProperty(), txtService.managedProperty(),
                 progressBar.visibleProperty(), progressBar.managedProperty(),
                 separator.visibleProperty(), separator.managedProperty()
         };
         for (BooleanProperty property : properties) {
-            property.bind(importFilesService.runningProperty());
+            property.bind(service.runningProperty());
         }
-        txtService.textProperty().bind(importFilesService.messageProperty());
-        progressBar.progressProperty().bind(importFilesService.progressProperty());
     }
 
-    @FXML
-    public void btnClearOnClick(ActionEvent actionEvent) {
-        System.out.println("Hola");
-    }
-
-    @FXML
-    public void btnNoTagsOnClick(ActionEvent actionEvent) {
-    }
-
-    @FXML
-    public void btnMenuOnClick(ActionEvent actionEvent) {
-    }
-
-    @FXML
-    public void btnImportOnClick(ActionEvent actionEvent) {
-        String[] extensions = new String[]{
-                "*.jpg", "*.jpeg", "*.gif", "*.png", "*.bmp"
-        };
+    private List<File> getStageImportFiles(Window window) {
+        String[] extensions = new String[]{"*.jpg", "*.jpeg", "*.gif", "*.png", "*.bmp"};
         ExtensionFilter extFilter = new ExtensionFilter("Images", extensions);
         FileChooser chooser = new FileChooser();
         chooser.getExtensionFilters().add(extFilter);
         chooser.setTitle("Importar Imágenes");
-        List<File> selectedFiles = chooser.showOpenMultipleDialog(GuiFxHelper.getOwner(actionEvent));
-        importFilesService.setFileList(selectedFiles);
-        importFilesService.restart();
+        return chooser.showOpenMultipleDialog(window);
+    }
+
+    @FXML
+    public void btnStageImportOnClick(ActionEvent actionEvent) {
+        Window window = ((Node) actionEvent.getSource()).getScene().getWindow();
+        List<File> selectedFiles = this.getStageImportFiles(window);
+        serviceImportFiles.setFileList(selectedFiles);
+        serviceImportFiles.restart();
     }
 }

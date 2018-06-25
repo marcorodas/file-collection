@@ -1,7 +1,8 @@
-package pe.mrodas.helper;
+package pe.mrodas.worker;
 
 import javafx.concurrent.Task;
 import pe.mrodas.MainApp;
+import pe.mrodas.helper.FileHelper;
 
 import java.io.File;
 import java.io.IOException;

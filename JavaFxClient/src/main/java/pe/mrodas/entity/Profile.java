@@ -1,8 +1,9 @@
 package pe.mrodas.entity;
 
+import lombok.Data;
+
 import java.util.ArrayList;
 import java.util.List;
-import lombok.Data;
 
 /**
  *
@@ -19,8 +20,8 @@ public class Profile {
         if (functionalityList == null) {
             functionalityList = new ArrayList<>();
         }
-        Functionality functionality = new Functionality();
-        functionality.setIdFunctionality(idFunctionality);
+        Functionality functionality = new Functionality()
+                .setIdFunctionality(idFunctionality);
         this.functionalityList.add(functionality);
         return functionality;
     }

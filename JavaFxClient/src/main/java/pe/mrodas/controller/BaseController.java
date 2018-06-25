@@ -6,6 +6,7 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Dimension2D;
 import javafx.scene.Cursor;
+import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
@@ -43,7 +44,7 @@ public abstract class BaseController {
     }
 
     private static String appTitle, appStyle;
-    private static Stream<String> appIcons;
+    private static List<String> appIcons;
 
     private final String fxmlFile;
 
@@ -80,7 +81,7 @@ public abstract class BaseController {
     }
 
     public BaseController setAppIcons(Stream<String> appIcons) {
-        BaseController.appIcons = appIcons;
+        BaseController.appIcons = appIcons.collect(Collectors.toList());
         return this;
     }
 
@@ -120,7 +121,7 @@ public abstract class BaseController {
 
     private void setAppIcons(Stage stage) {
         if (appIcons != null && stage.getIcons().isEmpty()) {
-            appIcons.map(Image::new).forEach(stage.getIcons()::add);
+            appIcons.stream().map(Image::new).forEach(stage.getIcons()::add);
         }
     }
 
@@ -144,12 +145,16 @@ public abstract class BaseController {
         }
     }
 
-    public Stage prepareStage(BaseController base) throws IOException {
-        return this.prepareStage(base == null ? null : base.stage);
+    public Stage prepareStage(Node node) throws IOException {
+        return this.prepareStage((Stage) node.getScene().getWindow());
     }
 
     public Stage prepareStage(Stage mStage) throws IOException {
         return this.prepareStage(this.getRoot(), mStage);
+    }
+
+    public Stage prepareStage(Parent root, Node node) {
+        return this.prepareStage(root, (Stage) node.getScene().getWindow());
     }
 
     public Stage prepareStage(Parent root, Stage mStage) {
@@ -235,6 +240,7 @@ public abstract class BaseController {
                 handler.accept(e);
             } catch (Exception ex) {
                 this.alertError(ex);
+                ex.printStackTrace();
             }
         });
     }

@@ -14,7 +14,7 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.text.Text;
 import pe.mrodas.MainApp;
-import pe.mrodas.helper.TaskLogin;
+import pe.mrodas.worker.TaskLogin;
 import pe.wallet.imageprocess.util.JFXValidator;
 
 public class LoginController extends BaseController {
@@ -75,7 +75,7 @@ public class LoginController extends BaseController {
             this.showTxtInvalid(true);
             txtUsername.requestFocus();
         } else {
-
+            super.handle(() -> new MenuController().prepareStage(txtUsername).show());
         }
     }
 

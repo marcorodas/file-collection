@@ -11,6 +11,6 @@ public class GalleryControllerTest extends TestBase {
 
     @Override
     public void startTest(Stage stage) throws Exception {
-        new GalleryController().prepareStage(new Stage()).show();
+        new GalleryController(menuEnum).prepareStage(new Stage()).show();
     }
 }

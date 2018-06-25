@@ -1,35 +1,50 @@
 package pe.mrodas.model;
 
-import pe.mrodas.entity.User;
-import retrofit2.Call;
+import okhttp3.Interceptor;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 import retrofit2.Retrofit;
-import retrofit2.http.POST;
+import retrofit2.converter.gson.GsonConverterFactory;
 
-public class Service {
+import java.io.IOException;
+
+public class RestClient implements Interceptor {
 
     private static final String BASE_URL = "http://localhost:9090/file-collection/rest/";
     private static String token;
     private static Retrofit retrofit;
+    private static RestClient restClient;
 
     public static void setToken(String token) {
-        Service.token = token;
+        restClient = null;
+        RestClient.token = token;
     }
 
-    public static Retrofit getRetrofit() {
+    public static <T> T create(Class<T> service) {
         if (retrofit == null) {
-            Retrofit.Builder builder = new Retrofit.Builder();
-
-            retrofit = builder
+            retrofit = new Retrofit.Builder()
                     .baseUrl(BASE_URL)
+                    .addConverterFactory(GsonConverterFactory.create())
                     .build();
         }
-        return retrofit;
+        if (restClient == null && token != null) {
+            restClient = new RestClient();
+            OkHttpClient client = new OkHttpClient.Builder()
+                    .addInterceptor(restClient)
+                    .build();
+            retrofit = retrofit.newBuilder()
+                    .client(client)
+                    .build();
+        }
+        return retrofit.create(service);
     }
 
-    public interface Login {
-        @POST("login/auth")
-        Call<User> auth();
+    public Response intercept(Interceptor.Chain chain) throws IOException {
+        Request newRequest = chain.request().newBuilder()
+                .addHeader("Authorization", "Bearer " + token)
+                .build();
+        return chain.proceed(newRequest);
     }
-
 
 }

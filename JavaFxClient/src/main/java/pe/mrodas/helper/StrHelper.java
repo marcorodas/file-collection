@@ -1,4 +1,4 @@
-package pe.mrodas.helper.common;
+package pe.mrodas.helper;
 
 import lombok.experimental.UtilityClass;
 

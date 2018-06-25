@@ -1,8 +1,9 @@
 package pe.mrodas;
 
+
 import javafx.application.Application;
 import javafx.stage.Stage;
-import pe.mrodas.controller.MenuController;
+import pe.mrodas.controller.LoginController;
 import pe.mrodas.entity.Session;
 
 import java.util.stream.Stream;
@@ -20,7 +21,7 @@ public class MainApp extends Application {
     public void start(Stage stage) throws Exception {
         Stream<String> icons = Stream.of("16x16", "32x32", "96x96")
                 .map(s -> String.format("images/favicon-%s.png", s));
-        new MenuController()
+        new LoginController()
                 .setAppTitle("File Collector")
                 .setAppStyle("/styles/Styles.css")
                 .setAppIcons(icons)
