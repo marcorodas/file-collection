@@ -75,7 +75,10 @@ public class LoginController extends BaseController {
             this.showTxtInvalid(true);
             txtUsername.requestFocus();
         } else {
-            super.handle(() -> new MenuController().prepareStage(txtUsername).show());
+            super.handle(() -> {
+
+                new MenuController().prepareStage(btnLogin).show();
+            });
         }
     }
 

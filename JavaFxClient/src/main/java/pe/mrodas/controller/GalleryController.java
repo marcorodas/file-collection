@@ -47,20 +47,16 @@ public class GalleryController extends BaseController {
 
     private void setServices() {
         serviceImportFiles = new ServiceImportFiles();
-        this.bindProgressProperties(serviceImportFiles);
-        txtService.textProperty().bind(serviceImportFiles.messageProperty());
-        progressBar.progressProperty().bind(serviceImportFiles.progressProperty());
-    }
-
-    private void bindProgressProperties(Service<?> service) {
-        BooleanProperty[] properties = new BooleanProperty[]{
+        /*BooleanProperty[] properties = new BooleanProperty[]{
                 txtService.visibleProperty(), txtService.managedProperty(),
                 progressBar.visibleProperty(), progressBar.managedProperty(),
                 separator.visibleProperty(), separator.managedProperty()
         };
         for (BooleanProperty property : properties) {
-            property.bind(service.runningProperty());
-        }
+            property.bind(serviceImportFiles.runningProperty());
+        }*/
+        txtService.textProperty().bind(serviceImportFiles.messageProperty());
+        progressBar.progressProperty().bind(serviceImportFiles.progressProperty());
     }
 
     private List<File> getStageImportFiles(Window window) {
@@ -72,7 +68,6 @@ public class GalleryController extends BaseController {
         return chooser.showOpenMultipleDialog(window);
     }
 
-    @FXML
     public void btnStageImportOnClick(ActionEvent actionEvent) {
         Window window = ((Node) actionEvent.getSource()).getScene().getWindow();
         List<File> selectedFiles = this.getStageImportFiles(window);

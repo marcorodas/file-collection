@@ -1,6 +1,6 @@
 @startuml
 ' see: http://plantuml.com/classes.html#More
-skinparam LineType ortho
+' skinparam LineType ortho
 skinparam Shadowing false
 skinparam Class {
     HeaderBackgroundColor #98BFDA
@@ -18,9 +18,10 @@ skinparam Class {
 hide methods
 hide stereotypes
 hide circle
+title File Collection Database
 
 TABLE(profile){
-  PK(idProfile) TINYINT(3) NOT_NULL()
+  PK(idProfile) TINYINT NOT_NULL()
   name VARCHAR(50) NOT_NULL()
 }
 
@@ -41,7 +42,7 @@ TABLE(user){
   password VARCHAR(90) NOT_NULL()
   token VARCHAR(50)
   FK(idPerson) INTEGER NOT_NULL()
-  FK(idProfile) TINYINT(3) NOT_NULL()
+  FK(idProfile) TINYINT NOT_NULL()
 }
 
 user }-- person
@@ -64,39 +65,25 @@ TABLE(functionality){
 }
 
 TABLE(functionality_x_profile){
-  FK(idProfile) TINYINT(3) NOT_NULL()
+  FK(idProfile) TINYINT NOT_NULL()
   FK(idFunctionality) INTEGER NOT_NULL()
 }
 
 functionality_x_profile }-- profile
 functionality_x_profile }-- functionality
 
-newpage
-skinparam LineType ortho
-skinparam Shadowing false
-skinparam Class {
-    HeaderBackgroundColor #98BFDA
-	BackgroundColor White
-	BorderColor #808080
-	ArrowColor #8c8c8c
-}
-!define TABLE(name) class name
-!define PK(x) <color:#f0c314><&key></color>**x**
-!define FK(x) <color:#dd776c><&key></color>**x**
-!define UNIQUE(x) <color:#fe5a63><&underline></color>x
-!define VARCHAR(size) {field}VARCHAR(size)
-!define CHAR(size) {field}CHAR(size)
-!define NOT_NULL(x) <size:9>not null</size>
-hide methods
-hide stereotypes
-hide circle
-
-title File Collection Database
-
 TABLE(root){
-    PK(idRoot) INTEGER NOT_NULL()
+    PK(idRoot) TINYINT NOT_NULL()
     UNIQUE(name) VARCHAR(50) NOT_NULL()
 }
+
+TABLE(user_x_root){
+    FK(idUser) INTEGER NOT_NULL()
+    FK(idRoot) TINYINT NOT_NULL()
+}
+
+user_x_root }-- root
+user_x_root }-- user
 
 TABLE(file_item){
   PK(idFile) INTEGER NOT_NULL()
@@ -114,7 +101,7 @@ file_content }-- file_item
 
 TABLE(tag){
   PK(idTag) INTEGER NOT_NULL()
-  FK(idRoot) INTEGER NOT_NULL()
+  FK(idRoot) TINYINT NOT_NULL()
   UNIQUE(name) VARCHAR(50) NOT_NULL()
 }
 
@@ -130,7 +117,7 @@ file_x_tag }-- tag
 
 TABLE(type){
     FK(idTag) INTEGER NOT_NULL()
-    FK(idRoot) INTEGER NOT_NULL()
+    FK(idRoot) TINYINT NOT_NULL()
 }
 
 type }-- tag
