@@ -15,10 +15,33 @@ import java.util.function.Function;
 
 public class RestClient {
 
+    public static class ErrorInfo {
+        private String url, modelClass, bodyResponse;
+
+        ErrorInfo(String url, String modelClass, String bodyResponse) {
+            this.url = url;
+            this.modelClass = modelClass;
+            this.bodyResponse = bodyResponse;
+        }
+
+        public String getUrl() {
+            return url;
+        }
+
+        public String getModelClass() {
+            return modelClass;
+        }
+
+        public String getBodyResponse() {
+            return bodyResponse;
+        }
+    }
+
     private static String baseUrl;
     private static String token;
     private static boolean tokenIsSet;
     private static Retrofit retrofit;
+    private static Function<ErrorInfo, String> errorHandler;
 
     public static void setBaseUrl(String baseUrl) {
         RestClient.baseUrl = baseUrl;
@@ -27,6 +50,10 @@ public class RestClient {
     public static void setToken(String token) {
         tokenIsSet = false;
         RestClient.token = token;
+    }
+
+    public static void setErrorHandler(Function<ErrorInfo, String> errorHandler) {
+        RestClient.errorHandler = errorHandler;
     }
 
     private static okhttp3.Response intercept(Interceptor.Chain chain) throws IOException {
@@ -56,28 +83,43 @@ public class RestClient {
         return retrofit;
     }
 
-    public static <T, R> void execute(Retrofit retro, Class<T> modelClass, Function<T, Call<R>> modelMethod, Consumer<R> onSuccess, Function<String, String> onError) throws Exception {
+    private static String getExceptionMessage(String modelClass, Response<?> response, Function<ErrorInfo, String> onError) throws IOException {
+        ResponseBody body = response.errorBody();
+        if (body == null) {
+            return "Null ErrorInfo Body Response";
+        }
+        if (onError != null || errorHandler != null) {
+            String url = response.raw().request().url().toString();
+            ErrorInfo errorInfo = new ErrorInfo(url, modelClass, body.string());
+            return onError == null ? errorHandler.apply(errorInfo) : onError.apply(errorInfo);
+        }
+        return "Server ErrorInfo & ErrorInfo Handler Not Set";
+    }
+
+    public static <T, R> void execute(Retrofit retro, Class<T> modelClass, Function<T, Call<R>> modelMethod, Consumer<R> onSuccess, Function<ErrorInfo, String> onError) throws Exception {
         T modelObj = retro.create(modelClass);
         Response<R> response = modelMethod.apply(modelObj).execute();
         if (response.isSuccessful()) {
             R responseBody = response.body();
             if (responseBody == null) {
-                throw new Exception("Error: response body is null");
-            } else {
-                onSuccess.accept(responseBody);
+                throw new Exception("Null Body Response");
             }
+            onSuccess.accept(responseBody);
         } else {
-            ResponseBody errorBody = response.errorBody();
-            if (errorBody == null) {
-                throw new Exception("Server Error");
-            } else {
-                String errorMessage = onError.apply(errorBody.string());
-                throw new Exception(errorMessage);
+            try {
+                String exceptionMessage = RestClient.getExceptionMessage(modelClass.toString(), response, onError);
+                throw new Exception(exceptionMessage);
+            } catch (IOException e) {
+                throw new Exception("I/O ErrorInfo: ErrorInfo Reading Response");
             }
         }
     }
 
-    public static <T, R> void execute(Class<T> modelClass, Function<T, Call<R>> modelMethod, Consumer<R> onSuccess, Function<String, String> onError) throws Exception {
+    public static <T, R> void execute(Class<T> modelClass, Function<T, Call<R>> modelMethod, Consumer<R> onSuccess) throws Exception {
+        RestClient.execute(RestClient.retrofit(), modelClass, modelMethod, onSuccess, null);
+    }
+
+    public static <T, R> void execute(Class<T> modelClass, Function<T, Call<R>> modelMethod, Consumer<R> onSuccess, Function<ErrorInfo, String> onError) throws Exception {
         RestClient.execute(RestClient.retrofit(), modelClass, modelMethod, onSuccess, onError);
     }
 }

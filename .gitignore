@@ -201,7 +201,7 @@ nbactions.xml
 logs
 npm-debug.log*
 yarn-debug.log*
-yarn-error.log*
+yarn-errorInfo.log*
 
 # Runtime data
 pids

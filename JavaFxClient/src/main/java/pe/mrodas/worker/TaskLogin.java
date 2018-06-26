@@ -1,13 +1,11 @@
 package pe.mrodas.worker;
 
-import com.google.gson.Gson;
 import javafx.concurrent.Task;
 import pe.mrodas.MainApp;
 import pe.mrodas.entity.Credential;
 import pe.mrodas.entity.User;
 import pe.mrodas.model.Login;
 import pe.mrodas.model.RestClient;
-import pe.mrodas.rest.ApiError;
 
 
 public class TaskLogin extends Task<Void> {
@@ -25,19 +23,10 @@ public class TaskLogin extends Task<Void> {
         MainApp.session().setPerson(user.getPerson());
     }
 
-    private String onError(String errorBody) {
-        ApiError apiError = new Gson().fromJson(errorBody, ApiError.class);
-        String trace = apiError.getTrace();
-        if (trace != null) {
-            System.out.println(trace);
-        }
-        return apiError.getMessage();
-    }
-
     @Override
     protected Void call() throws Exception {
         super.updateMessage("Authenticating...");
-        RestClient.execute(Login.class, login -> login.auth(credential), this::onSuccess, this::onError);
+        RestClient.execute(Login.class, login -> login.auth(credential), this::onSuccess, info -> MainApp.onError(info, false));
         return null;
     }
 }
