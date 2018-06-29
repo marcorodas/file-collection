@@ -1,8 +1,6 @@
 package pe.mrodas.controller;
 
 import com.jfoenix.controls.JFXProgressBar;
-import javafx.beans.property.BooleanProperty;
-import javafx.concurrent.Service;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
@@ -13,7 +11,7 @@ import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.stage.Window;
-import pe.mrodas.entity.MenuEnum;
+import pe.mrodas.entity.Root;
 import pe.mrodas.worker.ServiceImportFiles;
 
 import java.io.File;
@@ -33,9 +31,9 @@ public class GalleryController extends BaseController {
     public Separator separator;
 
     private ServiceImportFiles serviceImportFiles;
-    private final MenuEnum selected;
+    private final Root selected;
 
-    public GalleryController(MenuEnum selected) {
+    public GalleryController(Root selected) {
         super("/fxml/Gallery.fxml");
         this.selected = selected;
     }

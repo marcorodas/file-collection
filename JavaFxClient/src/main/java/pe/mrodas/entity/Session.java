@@ -9,5 +9,5 @@ import java.nio.file.Path;
 @Data
 public class Session {
     private Path workingDir;
-    private Person person;
+    private User user;
 }

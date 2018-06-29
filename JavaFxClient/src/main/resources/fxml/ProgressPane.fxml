@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ProgressBar?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+
+<BorderPane xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="pe.mrodas.controller.ProgressController">
+   <top>
+      <Separator fx:id="separator" prefWidth="200.0" BorderPane.alignment="CENTER">
+         <BorderPane.margin>
+            <Insets bottom="5.0" />
+         </BorderPane.margin>
+      </Separator>
+   </top>
+   <left>
+      <HBox BorderPane.alignment="CENTER">
+         <BorderPane.margin>
+            <Insets bottom="5.0" left="5.0" top="-1.0" />
+         </BorderPane.margin>
+         <children>
+            <Label fx:id="lblReady" text="Ready" />
+            <Label fx:id="lblServiceMessage" layoutX="10.0" layoutY="10.0" text="{Service Message}" />
+         </children>
+      </HBox>
+   </left>
+   <right>
+      <ProgressBar fx:id="progressBar" progress="0.0" BorderPane.alignment="CENTER">
+         <BorderPane.margin>
+            <Insets bottom="5.0" right="5.0" />
+         </BorderPane.margin>
+      </ProgressBar>
+   </right>
+</BorderPane>

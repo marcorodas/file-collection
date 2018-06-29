@@ -75,6 +75,7 @@ functionality_x_profile }-- functionality
 TABLE(root){
     PK(idRoot) TINYINT NOT_NULL()
     UNIQUE(name) VARCHAR(50) NOT_NULL()
+    imageUrl VARCHAR(200) NOT_NULL()
 }
 
 TABLE(user_x_root){

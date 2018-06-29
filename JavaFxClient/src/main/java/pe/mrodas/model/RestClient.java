@@ -96,27 +96,34 @@ public class RestClient {
         return "Server ErrorInfo & ErrorInfo Handler Not Set";
     }
 
-    public static <T, R> void execute(Retrofit retro, Class<T> modelClass, Function<T, Call<R>> modelMethod, Consumer<R> onSuccess, Function<ErrorInfo, String> onError) throws Exception {
+    public static <T, R> R execute(Retrofit retro, Class<T> modelClass, Function<T, Call<R>> modelMethod, Function<ErrorInfo, String> onError) throws Exception {
         T modelObj = retro.create(modelClass);
         Response<R> response = modelMethod.apply(modelObj).execute();
         if (response.isSuccessful()) {
-            R responseBody = response.body();
-            if (responseBody == null) {
-                throw new Exception("Null Body Response");
-            }
-            onSuccess.accept(responseBody);
-        } else {
-            try {
-                String exceptionMessage = RestClient.getExceptionMessage(modelClass.toString(), response, onError);
-                throw new Exception(exceptionMessage);
-            } catch (IOException e) {
-                throw new Exception("I/O ErrorInfo: ErrorInfo Reading Response");
-            }
+            return response.body();
+        }
+        try {
+            String exceptionMessage = RestClient.getExceptionMessage(modelClass.toString(), response, onError);
+            throw new Exception(exceptionMessage);
+        } catch (IOException e) {
+            throw new Exception("I/O ErrorInfo: ErrorInfo Reading Response");
         }
     }
 
-    public static <T, R> void execute(Class<T> modelClass, Function<T, Call<R>> modelMethod, Consumer<R> onSuccess) throws Exception {
-        RestClient.execute(RestClient.retrofit(), modelClass, modelMethod, onSuccess, null);
+    public static <T, R> R execute(Class<T> modelClass, Function<T, Call<R>> modelMethod, Function<ErrorInfo, String> onError) throws Exception {
+        return RestClient.execute(RestClient.retrofit(), modelClass, modelMethod, onError);
+    }
+
+    public static <T, R> R execute(Class<T> modelClass, Function<T, Call<R>> modelMethod) throws Exception {
+        return RestClient.execute(modelClass, modelMethod, null);
+    }
+
+    public static <T, R> void execute(Retrofit retro, Class<T> modelClass, Function<T, Call<R>> modelMethod, Consumer<R> onSuccess, Function<ErrorInfo, String> onError) throws Exception {
+        R result = RestClient.execute(retro, modelClass, modelMethod, onError);
+        if (result == null) {
+            throw new Exception("Null Body Response");
+        }
+        onSuccess.accept(result);
     }
 
     public static <T, R> void execute(Class<T> modelClass, Function<T, Call<R>> modelMethod, Consumer<R> onSuccess, Function<ErrorInfo, String> onError) throws Exception {

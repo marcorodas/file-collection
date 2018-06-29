@@ -1,8 +1,7 @@
 package pe.mrodas.controller;
 
-import javafx.concurrent.Task;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.concurrent.WorkerStateEvent;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Dimension2D;
 import javafx.scene.Cursor;
@@ -10,13 +9,15 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
 import javafx.scene.image.Image;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import org.controlsfx.dialog.ProgressDialog;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
+import pe.mrodas.helper.guiFx.ExceptionAlert;
+import pe.mrodas.helper.guiFx.StatusBar;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -35,16 +36,9 @@ public abstract class BaseController {
         void run() throws Exception;
     }
 
-    public interface OnError {
-        void handle(Exception ex);
-    }
-
-    public interface Handler<T> {
-        void accept(T t) throws Exception;
-    }
-
     private static String appTitle, appStyle;
     private static List<String> appIcons;
+    private static boolean debugMode = true;
 
     private final String fxmlFile;
 
@@ -52,7 +46,6 @@ public abstract class BaseController {
     private final List<String> styleFiles = new ArrayList<>();
     private Stage stage, owner;
     private String title;
-
     private boolean isResizable;
 
     /**
@@ -91,11 +84,15 @@ public abstract class BaseController {
         return this;
     }
 
-    public BaseController setStyle(String cssFile) {
+    public BaseController setDebugMode(boolean debugMode) {
+        BaseController.debugMode = debugMode;
+        return this;
+    }
+
+    public void setStyle(String cssFile) {
         if (cssFile != null && !styleFiles.contains(cssFile)) {
             styleFiles.add(cssFile);
         }
-        return this;
     }
 
     public BaseController setOwner(Stage owner) {
@@ -108,9 +105,8 @@ public abstract class BaseController {
         return this;
     }
 
-    public BaseController setTitle(String title) {
+    public void setTitle(String title) {
         this.title = title;
-        return this;
     }
 
     private String getTitle() {
@@ -184,64 +180,35 @@ public abstract class BaseController {
         }
     }
 
-    private Alert getAlert(Alert.AlertType type, String contentText) {
-        Alert alert = new Alert(type, contentText);
+    private Alert setAlertIcons(Alert alert) {
         this.setAppIcons((Stage) alert.getDialogPane().getScene().getWindow());
         return alert;
     }
 
-    void alertInfo(String... msjs) {
+    void infoAlert(String... msjs) {
         String txt = Stream.of(msjs).collect(Collectors.joining(""));
-        this.getAlert(Alert.AlertType.INFORMATION, txt).showAndWait();
+        Alert alert = new Alert(Alert.AlertType.INFORMATION, txt);
+        this.setAlertIcons(alert).showAndWait();
     }
 
-    void alertError(Throwable ex, String... msjs) {
-        String join = msjs == null ? "" : Stream.of(msjs).collect(Collectors.joining(", "));
-        String exMsj = ex.getMessage() == null ? ex.toString() : ex.getMessage();
-        this.getAlert(Alert.AlertType.ERROR, join.isEmpty() ? exMsj : (exMsj + ": " + join))
-                .showAndWait();
+    void onServiceFailed(WorkerStateEvent state) {
+        Throwable e = state.getSource().getException();
+        this.setAlertIcons(new ExceptionAlert(e, debugMode)).showAndWait();
     }
 
-    void onServiceFailed(WorkerStateEvent e) {
-        this.alertError(e.getSource().getException());
-    }
-
-    <T> void showProgressDialog(String title, Task<T> task, Consumer<T> onSuccess) {
-        task.setOnSucceeded(event -> onSuccess.accept(task.getValue()));
-        task.setOnFailed(event -> {
-            this.alertError(task.getException());
-            this.stage.close();
-        });
-        ProgressDialog dialog = new ProgressDialog(task);
-        dialog.setTitle(title);
-        dialog.setHeaderText(null);
-        dialog.setGraphic(null);
-        this.setAppIcons((Stage) dialog.getDialogPane().getScene().getWindow());
-        Thread thread = new Thread(task);
-        thread.setDaemon(true);
-        thread.start();
-    }
-
-    void handle(Runnable runnable, OnError onError) {
+    void handle(Runnable runnable, Consumer<Exception> onError) {
         try {
             runnable.run();
         } catch (Exception e) {
-            onError.handle(e);
+            onError.accept(e);
         }
     }
 
     void handle(Runnable runnable) {
-        this.handle(runnable, e -> this.alertError(e));
+        this.handle(runnable, ex -> this.setAlertIcons(new ExceptionAlert(ex, debugMode)).showAndWait());
     }
 
-    void setOnAction(Button button, Handler<ActionEvent> handler) {
-        button.setOnAction(e -> {
-            try {
-                handler.accept(e);
-            } catch (Exception ex) {
-                this.alertError(ex);
-                ex.printStackTrace();
-            }
-        });
+    public boolean isPrimaryDoubleClick(MouseEvent e) {
+        return e.getButton() == MouseButton.PRIMARY && e.getClickCount() == 2;
     }
 }

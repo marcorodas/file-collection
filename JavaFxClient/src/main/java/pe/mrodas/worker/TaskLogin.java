@@ -8,7 +8,7 @@ import pe.mrodas.model.Login;
 import pe.mrodas.model.RestClient;
 
 
-public class TaskLogin extends Task<Void> {
+public class TaskLogin extends Task<User> {
 
     private final Credential credential;
 
@@ -18,15 +18,9 @@ public class TaskLogin extends Task<Void> {
                 .setPassword(pass);
     }
 
-    private void onSuccess(User user) {
-        RestClient.setToken(user.getToken());
-        MainApp.session().setPerson(user.getPerson());
-    }
-
     @Override
-    protected Void call() throws Exception {
+    protected User call() throws Exception {
         super.updateMessage("Authenticating...");
-        RestClient.execute(Login.class, login -> login.auth(credential), this::onSuccess, info -> MainApp.onError(info, false));
-        return null;
+        return RestClient.execute(Login.class, login -> login.auth(credential));
     }
 }
