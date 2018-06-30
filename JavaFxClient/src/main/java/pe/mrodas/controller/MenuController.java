@@ -11,7 +11,9 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.Text;
 import javafx.stage.Stage;
+import pe.mrodas.MainApp;
 import pe.mrodas.entity.Root;
 
 import java.util.List;
@@ -19,20 +21,21 @@ import java.util.stream.Stream;
 
 public class MenuController extends BaseController {
 
-    private final List<Root> rootList;
-
-    public MenuController(List<Root> rootList) {
+    public MenuController() {
         super(null);
         super.setTitle("Menu");
-        this.rootList = rootList;
     }
 
     @Override
     public Stage prepareStage(Node node) {
-        Button[] buttons = rootList.stream()
+        Button[] buttons = MainApp.session().getUser().getRootList().stream()
                 .map(this::getButton)
                 .toArray(Button[]::new);
-        VBox root = new VBox(7, new HBox(7, buttons));
+        Node[] content = buttons.length == 0 ? new Node[]{
+                new Text("No buttons for this user")
+        } : buttons;
+        VBox root = new VBox(7, new HBox(7, content));
+        root.setMinWidth(300);
         root.setPadding(new Insets(7, 7, 7, 5));
         return super.prepareStage(root, node);
     }

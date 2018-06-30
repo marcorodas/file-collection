@@ -7,13 +7,9 @@ import javafx.concurrent.Task;
 import javafx.concurrent.WorkerStateEvent;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.Parent;
 import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.ProgressBar;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import pe.mrodas.MainApp;
 import pe.mrodas.entity.User;
@@ -56,24 +52,21 @@ public class LoginController extends BaseController {
             }
         };
         loginService.setOnSucceeded(this::onLoginResponse);
-        loginService.setOnFailed(super::onServiceFailed);
+        loginService.setOnFailed(event -> {
+            super.onServiceFailed(event);
+            txtUsername.requestFocus();
+        });
         content.disableProperty().bind(loginService.runningProperty());
         progressController.setService(loginService);
     }
 
     private void onLoginResponse(WorkerStateEvent e) {
         User user = (User) e.getSource().getValue();
-        if (user == null) {
-            super.infoAlert("Invalid user or password");
-            txtUsername.requestFocus();
-        } else {
-            RestClient.setToken(user.getToken());
-            MainApp.session().setUser(user);
-            super.infoAlert("Login Success! User:" + user.getPerson().getFullName());
-            super.handle(() -> {
-                //new MenuController().prepareStage(btnLogin).show();
-            });
-        }
+        RestClient.setToken(user.getToken());
+        MainApp.session().setUser(user);
+        super.handle(() -> new MenuController()
+                .setDebugMode(MainApp.debugMode())
+                .prepareStage(btnLogin).show());
     }
 
     @FXML

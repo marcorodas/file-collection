@@ -1,6 +1,5 @@
 package pe.mrodas.controller;
 
-import javafx.beans.property.SimpleObjectProperty;
 import javafx.concurrent.WorkerStateEvent;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Dimension2D;
@@ -16,8 +15,7 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
-import pe.mrodas.helper.guiFx.ExceptionAlert;
-import pe.mrodas.helper.guiFx.StatusBar;
+import pe.mrodas.helper.ExceptionAlert;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -26,6 +24,7 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -38,12 +37,13 @@ public abstract class BaseController {
 
     private static String appTitle, appStyle;
     private static List<String> appIcons;
-    private static boolean debugMode = true;
+    private static boolean debugMode;
+    private static BiFunction<Throwable, Boolean, Alert> alertExceptionHandler;
 
     private final String fxmlFile;
+    private final List<String> styleFiles = new ArrayList<>();
 
     private Dimension2D dimension;
-    private final List<String> styleFiles = new ArrayList<>();
     private Stage stage, owner;
     private String title;
     private boolean isResizable;
@@ -86,6 +86,11 @@ public abstract class BaseController {
 
     public BaseController setDebugMode(boolean debugMode) {
         BaseController.debugMode = debugMode;
+        return this;
+    }
+
+    public BaseController setAlertExceptionHandler(BiFunction<Throwable, Boolean, Alert> alertExceptionHandler) {
+        BaseController.alertExceptionHandler = alertExceptionHandler;
         return this;
     }
 
@@ -193,7 +198,7 @@ public abstract class BaseController {
 
     void onServiceFailed(WorkerStateEvent state) {
         Throwable e = state.getSource().getException();
-        this.setAlertIcons(new ExceptionAlert(e, debugMode)).showAndWait();
+        this.showExceptionAlert(e);
     }
 
     void handle(Runnable runnable, Consumer<Exception> onError) {
@@ -205,7 +210,14 @@ public abstract class BaseController {
     }
 
     void handle(Runnable runnable) {
-        this.handle(runnable, ex -> this.setAlertIcons(new ExceptionAlert(ex, debugMode)).showAndWait());
+        this.handle(runnable, this::showExceptionAlert);
+    }
+
+    private void showExceptionAlert(Throwable e) {
+        Alert exceptionAlert = alertExceptionHandler == null
+                ? new ExceptionAlert(e, debugMode)
+                : alertExceptionHandler.apply(e, debugMode);
+        this.setAlertIcons(exceptionAlert).showAndWait();
     }
 
     public boolean isPrimaryDoubleClick(MouseEvent e) {

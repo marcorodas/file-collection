@@ -1,4 +1,4 @@
-package pe.mrodas.helper.guiFx;
+package pe.mrodas.helper;
 
 import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
@@ -8,28 +8,24 @@ import javafx.scene.layout.Priority;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class ExceptionAlert extends Alert {
-
-    public ExceptionAlert(Throwable exception) {
-        this(exception, false);
-    }
 
     public ExceptionAlert(Throwable exception, boolean debugMode) {
         super(AlertType.ERROR);
         this.setHeaderText(exception.getClass().getSimpleName());
         this.setContentText(exception.getMessage());
         if (debugMode) {
-            Label label = new Label("The exception stacktrace was:");
-            String trace = this.getTrace(exception);
-            Logger.getLogger("ExceptionAlert").log(Level.SEVERE, trace);
-            TextArea textArea = this.getTextArea(trace);
-            GridPane expContent = this.getGridPane(label, textArea);
-            this.getDialogPane().setExpandableContent(expContent);
-            this.getDialogPane().setExpanded(true);
+            this.setExpandableContent(this.getTrace(exception));
         }
+    }
+
+    private void setExpandableContent(String trace) {
+        Label label = new Label("The exception stacktrace was:");
+        TextArea textArea = this.getTextArea(trace);
+        GridPane expContent = this.getGridPane(label, textArea);
+        this.getDialogPane().setExpandableContent(expContent);
+        this.getDialogPane().setExpanded(true);
     }
 
     private GridPane getGridPane(Label label, TextArea textArea) {
