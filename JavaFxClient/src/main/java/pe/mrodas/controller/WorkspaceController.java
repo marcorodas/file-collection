@@ -9,6 +9,7 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
+import pe.mrodas.MainApp;
 import pe.mrodas.entity.Config;
 import pe.mrodas.entity.Environment;
 import pe.mrodas.worker.TaskSaveConfig;
@@ -47,6 +48,7 @@ public class WorkspaceController extends BaseController {
 
     public WorkspaceController setOnSaveSuccess(Runnable runOnOkClick) {
         saveConfigService.setOnSucceeded(event -> {
+            MainApp.getSession().setWorkingDir(txtWorkspace.getText());
             super.closeWindow();
             super.handle(runOnOkClick);
         });
