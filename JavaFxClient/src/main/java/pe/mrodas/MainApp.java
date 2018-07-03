@@ -20,11 +20,16 @@ import java.util.stream.Stream;
 public class MainApp extends Application {
 
     private static boolean debugMode = true;
-    private static final Session SESSION = new Session();
+    private static Session session;
 
-    public static Session session() {
-        return SESSION;
+    public static void setSession(Session session) {
+        MainApp.session = session;
     }
+
+    public static Session getSession() {
+        return MainApp.session;
+    }
+
     public static boolean debugMode() {
         return debugMode;
     }

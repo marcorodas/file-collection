@@ -1,95 +1,107 @@
 package pe.mrodas.controller;
 
-import de.jensd.fx.glyphs.GlyphIcon;
-import de.jensd.fx.glyphs.materialdesignicons.MaterialDesignIcon;
-import de.jensd.fx.glyphs.materialdesignicons.MaterialDesignIconView;
-import javafx.geometry.Insets;
-import javafx.scene.Node;
-import javafx.scene.control.Button;
-import javafx.scene.control.ContentDisplay;
+import javafx.fxml.FXML;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
-import javafx.scene.text.Text;
-import javafx.stage.Stage;
+import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.StackPane;
 import pe.mrodas.MainApp;
 import pe.mrodas.entity.Root;
 
-import java.util.List;
-import java.util.stream.Stream;
+import java.awt.event.ActionEvent;
+import java.util.Optional;
+import java.util.function.Consumer;
+
 
 public class MenuController extends BaseController {
 
+    @FXML
+    private FlowPane content;
+    @FXML
+    private Label lblNoButtons;
+
     public MenuController() {
-        super(null);
+        super("/fxml/Menu.fxml");
         super.setTitle("Menu");
     }
 
     @Override
-    public Stage prepareStage(Node node) {
-        Button[] buttons = MainApp.session().getUser().getRootList().stream()
+    public void initialize() {
+        Button[] buttons = MainApp.getSession().getRootList().stream()
                 .map(this::getButton)
                 .toArray(Button[]::new);
-        Node[] content = buttons.length == 0 ? new Node[]{
-                new Text("No buttons for this user")
-        } : buttons;
-        VBox root = new VBox(7, new HBox(7, content));
-        root.setMinWidth(300);
-        root.setPadding(new Insets(7, 7, 7, 5));
-        return super.prepareStage(root, node);
+        if (buttons.length == 0) {
+            content.setVisible(false);
+            content.setManaged(false);
+        } else {
+            lblNoButtons.setVisible(false);
+            lblNoButtons.setManaged(false);
+            for (Button button : buttons) {
+                content.getChildren().add(button);
+            }
+        }
+    }
+
+    private void setImageBtn(String url, Button button) {
+        int size = 100;
+        Image image = new Image(url, size, size, false, true, true);
+        image.progressProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue.intValue() == 1) {
+                button.setGraphic(new ImageView(image));
+            }
+        });
+        ProgressBar progressBar = new ProgressBar();
+        progressBar.setPrefWidth(80);
+        progressBar.progressProperty().bind(image.progressProperty());
+        StackPane pane = new StackPane(progressBar);
+        pane.setStyle("-fx-border-color: gray; -fx-border-style: dashed");
+        pane.setPrefSize(size, size);
+        button.setGraphic(pane);
     }
 
     private Button getButton(Root root) {
         Button button = new Button(root.getName());
-        try {
-            String imageUrl = root.getImageUrl();
-            double size = 100;
-            Image image = new Image(imageUrl, size, size, true, true);
-            button.setGraphic(new ImageView(image));
-        } catch (Exception e) {
-            GlyphIcon<?> iconView = new MaterialDesignIconView(MaterialDesignIcon.WIFI_OFF);
-            iconView.setSize("40");
-            button.setGraphic(iconView);
-        }
+        button.setPrefHeight(140);
+        this.setImageBtn(root.getImageUrl(), button);
         button.setContentDisplay(ContentDisplay.TOP);
-        Runnable runnable = this.getRunnable(root, button);
-        button.setOnAction(event -> super.handle(runnable));
+        button.setOnAction(event -> this.handle(() -> {
+            if (MainApp.getSession().getWorkingDir() == null) {
+                new WorkspaceController()
+                        .setOnSaveSuccess(() -> this.getBtnAction(root))
+                        .setOwner(event)
+                        .prepareStage()
+                        .show();
+            } else {
+                this.getBtnAction(root);
+            }
+        }));
         return button;
     }
 
-    private Runnable getRunnable(Root root, Button button) {
-        int idRoot = root.getIdRoot() == null ? 0 : root.getIdRoot();
-        switch (Item.get(idRoot)) {
+    private void getBtnAction(Root root) throws Exception {
+        Integer id = root.getIdRoot();
+        switch (Item.get(id)) {
             case ANTIFUJIMORISMO:
-                return () -> new GalleryController(root)
-                        .prepareStage(button)
+                new CollectionController()
+                        .prepareStage(content)
                         .show();
+                break;
         }
-        return () -> super.infoAlert("No Action Set");
-    }
-
-    @Override
-    public void initialize() {
+        super.dialogInfo("No Action Set");
     }
 
     public enum Item {
-        NONE(0), ANTIFUJIMORISMO(1), MEMES(2), COMPROBANTES(3);
-        private int id;
+        NONE, ANTIFUJIMORISMO, MEMES, COMPROBANTES;
 
-        public int getId() {
-            return id;
-        }
-
-        Item(int id) {
-            this.id = id;
-        }
-
-        public static Item get(int id) {
-            for (Item item : Item.values()) {
-                if (item.getId() == id) {
-                    return item;
-                }
+        public static Item get(Integer id) {
+            switch (id == null ? 0 : id) {
+                case 1:
+                    return ANTIFUJIMORISMO;
+                case 2:
+                    return MEMES;
+                case 3:
+                    return COMPROBANTES;
             }
             return NONE;
         }

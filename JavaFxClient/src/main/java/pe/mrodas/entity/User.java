@@ -1,11 +1,7 @@
 package pe.mrodas.entity;
 
 import lombok.Data;
-import lombok.Getter;
 import lombok.experimental.Accessors;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author skynet
@@ -20,6 +16,4 @@ public class User {
     private String token;
     private Person person = new Person();
     private Profile profile;
-    private List<Root> rootList = new ArrayList<>();
-
 }

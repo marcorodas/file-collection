@@ -13,16 +13,6 @@ import java.util.List;
 
 @UtilityClass
 public class UserDA {
-
-    private int getUserId(Credential credential) throws Exception {
-        String password = credential.getPassword();
-        return new SqlQuery<Integer>()
-                .setSql("SELECT idUser FROM user WHERE username = :user AND password = :pass")
-                .addParameter("user", credential.getUsername())
-                .addParameter("pass", DigestUtils.sha256Hex(password))
-                .execute(rs -> rs.next() ? rs.getInt("idUser") : 0);
-    }
-
     /**
      * @param token can be null
      * @return userId
@@ -49,46 +39,73 @@ public class UserDA {
                 .execute(connection);
     }
 
-    public User authenticateUser(Credential credential) throws Exception {
-        int idUsuario = UserDA.getUserId(credential);
-        if (idUsuario == 0) {
-            throw new NotAuthorizedException("Invalid user!");
-        }
+    public Session authenticateUser(Credential credential) throws Exception {
         return Adapter.batch(connection -> {
-            User user = UserDA.getUserProfile(connection, idUsuario);
-            Integer idProfile = user.getProfile() == null ? null : user.getProfile().getIdProfile();
+            Session session = UserDA.getUserSession(connection, credential);
+            User user = session.getUser();
+            Integer idProfile = user.getProfile().getIdProfile();
             if (idProfile == null || idProfile == 0) {
                 throw new IllegalArgumentException("Error idProfile can't be zero or null");
             }
             List<Functionality> list = ProfileDA.getFunctionalityList(connection, idProfile);
             user.getProfile().setFunctionalityList(list);
             UserDA.updateToken(connection, user.autoGenToken());
-            return user;
+            List<Root> rootList = RootDA.getRootList(connection, user.getIdUser());
+            return session.setRootList(rootList);
         });
     }
 
-    private User getUserProfile(Connection connection, int idUser) throws Exception {
-        return new SqlQuery<>(User.class, connection, false).setSql(new String[]{
-                "SELECT U.username, P.idProfile, P.name,",
-                "   PER.idPerson, PER.firstname, PER.lastname, PER.mail",
+    private Session getUserSession(Connection connection, Credential credential) throws Exception {
+        SqlQuery<Session> query = new SqlQuery<Session>(connection, false).setSql(new String[]{
+                "SELECT U.idUser, U.username, P.idProfile, P.name,",
+                "   PER.idPerson, PER.firstname, PER.lastname, PER.mail,",
+                "   C.workingDir",
                 "   FROM user U",
                 "   INNER JOIN profile P",
                 "       ON P.idProfile = U.idProfile",
                 "   INNER JOIN person PER",
                 "       ON PER.idPerson = U.idPerson",
-                "   WHERE U.idUser = :idUser"
-        }).setMapper((mapper, user, rs) -> {
-            user.setIdUser(idUser);
-            Person person = user.getPerson();
-            Profile profile = user.getProfile();
-            mapper.map(user::setUsername, rs::getString)
-                    .map(profile::setIdProfile, rs::getInt)
-                    .map(profile::setName, rs::getString)
-                    .map(person::setIdPerson, rs::getInt)
-                    .map(person::setFirstname, rs::getString)
-                    .map(person::setLastname, rs::getString)
-                    .map(person::setMail, rs::getString);
-        }).addParameter("idUser", idUser).executeFirst();
+                "   LEFT JOIN config C",
+                "       ON C.idCreator = U.idUser",
+                "       AND C.sysHostName = :sysHostName",
+                "       AND C.sysOsName = :sysOsName",
+                "       AND C.sysUserName = :sysUserName",
+                "   WHERE U.username = :user AND U.password = :pass"
+        }).addParameter("user", credential.getUsername());
+        String pass = DigestUtils.sha256Hex(credential.getPassword());
+        query.addParameter("pass", pass);
+        Environment e = Environment.nullFieldsToEmpty(credential.getEnvironment());
+        query.addParameter("sysHostName", e.getHostName())
+                .addParameter("sysOsName", e.getOsName())
+                .addParameter("sysUserName", e.getUsername());
+        Session session = query.execute(rs -> {
+            if (!rs.next()) {
+                return null;
+            }
+            int idUser = rs.getInt("idUser");
+            if (idUser == 0) {
+                return null;
+            }
+            Profile profile = new Profile()
+                    .setIdProfile(rs.getInt("idProfile"))
+                    .setName(rs.getString("name"));
+            Person person = new Person()
+                    .setIdPerson(rs.getInt("idPerson"))
+                    .setFirstname(rs.getString("firstname"))
+                    .setLastname(rs.getString("lastname"))
+                    .setMail(rs.getString("mail"));
+            User user = new User()
+                    .setIdUser(idUser)
+                    .setUsername(rs.getString("username"))
+                    .setProfile(profile)
+                    .setPerson(person);
+            return new Session()
+                    .setUser(user)
+                    .setWorkingDir(rs.getString("workingDir"));
+        });
+        if (session == null) {
+            throw new NotAuthorizedException("Invalid user!");
+        }
+        return session;
     }
-
 }

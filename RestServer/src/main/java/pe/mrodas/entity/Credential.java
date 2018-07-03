@@ -11,4 +11,5 @@ public class Credential {
 
     private String username;
     private String password;
+    private Environment environment;
 }

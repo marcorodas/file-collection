@@ -8,22 +8,27 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 import javafx.scene.image.Image;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.event.ActionEvent;
+
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 import pe.mrodas.helper.ExceptionAlert;
 
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -49,9 +54,11 @@ public abstract class BaseController {
     private boolean isResizable;
 
     /**
-     * Constructor must be public
+     * Constructor must be public. If fx:controller is provided in fxml file,
+     * the controller shouldn't have parameters.
+     * Specify fxml file using super() constructor.
      *
-     * @param fxmlFile fxml path (begins with '/'). fx:controller is specified in fxml
+     * @param fxmlFile fxml path (begins with '/').
      */
     public BaseController(String fxmlFile) {
         this.fxmlFile = fxmlFile;
@@ -105,6 +112,11 @@ public abstract class BaseController {
         return this;
     }
 
+    public BaseController setOwner(ActionEvent event) {
+        this.owner = this.getStage(event);
+        return this;
+    }
+
     public BaseController setAppTitle(String appTitle) {
         BaseController.appTitle = appTitle;
         return this;
@@ -146,16 +158,16 @@ public abstract class BaseController {
         }
     }
 
-    public Stage prepareStage(Node node) throws IOException {
-        return this.prepareStage((Stage) node.getScene().getWindow());
+    Stage prepareStage(Node node) throws IOException {
+        return this.prepareStage(this.getRoot(), node == null ? null : this.getStage(node));
     }
 
     public Stage prepareStage(Stage mStage) throws IOException {
         return this.prepareStage(this.getRoot(), mStage);
     }
 
-    public Stage prepareStage(Parent root, Node node) {
-        return this.prepareStage(root, (Stage) node.getScene().getWindow());
+    Stage prepareStage() throws IOException {
+        return this.prepareStage(this.getRoot(), null);
     }
 
     public Stage prepareStage(Parent root, Stage mStage) {
@@ -190,10 +202,23 @@ public abstract class BaseController {
         return alert;
     }
 
-    void infoAlert(String... msjs) {
-        String txt = Stream.of(msjs).collect(Collectors.joining(""));
-        Alert alert = new Alert(Alert.AlertType.INFORMATION, txt);
-        this.setAlertIcons(alert).showAndWait();
+    private Optional<ButtonType> dialog(Alert.AlertType type, String... msjs) {
+        String txt = Stream.of(msjs).collect(Collectors.joining("\n"));
+        Alert alert = new Alert(type, txt);
+        alert.setHeaderText(null);
+        return this.setAlertIcons(alert).showAndWait();
+    }
+
+    void dialogInfo(String... msjs) {
+        this.dialog(Alert.AlertType.INFORMATION, msjs);
+    }
+
+    void dialogWarning(String... msjs) {
+        this.dialog(Alert.AlertType.WARNING, msjs);
+    }
+
+    Optional<ButtonType> dialogConfirm(String... msjs) {
+        return this.dialog(Alert.AlertType.CONFIRMATION, msjs);
     }
 
     void onServiceFailed(WorkerStateEvent state) {
@@ -214,10 +239,23 @@ public abstract class BaseController {
     }
 
     private void showExceptionAlert(Throwable e) {
-        Alert exceptionAlert = alertExceptionHandler == null
+        Alert alert = alertExceptionHandler == null
                 ? new ExceptionAlert(e, debugMode)
                 : alertExceptionHandler.apply(e, debugMode);
-        this.setAlertIcons(exceptionAlert).showAndWait();
+        alert.setHeaderText(null);
+        this.setAlertIcons(alert).showAndWait();
+    }
+
+    private Stage getStage(Node node) {
+        return (Stage) node.getScene().getWindow();
+    }
+
+    Stage getStage(ActionEvent e) {
+        return this.getStage((Node) e.getSource());
+    }
+
+    void closeWindow() {
+        this.stage.close();
     }
 
     public boolean isPrimaryDoubleClick(MouseEvent e) {

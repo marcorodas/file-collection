@@ -3,11 +3,13 @@ package pe.mrodas.entity;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Data;
+import lombok.experimental.Accessors;
 
 /**
  *
  * @author skynet
  */
+@Accessors(chain = true)
 @Data
 public class Profile {
 

@@ -116,12 +116,12 @@ TABLE(file_x_tag){
 file_x_tag }-- file_item
 file_x_tag }-- tag
 
-TABLE(type){
+TABLE(category){
     FK(idTag) INTEGER NOT_NULL()
     FK(idRoot) TINYINT NOT_NULL()
 }
 
-type }-- tag
-type }-- root
+category }-- tag
+category }-- root
 
 @enduml

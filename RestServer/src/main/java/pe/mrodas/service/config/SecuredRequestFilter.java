@@ -47,6 +47,14 @@ public class SecuredRequestFilter implements ContainerRequestFilter {
         return null;
     }
 
+    public static int getUserId(SecurityContext context) throws Exception {
+        int id = Integer.parseInt(context.getUserPrincipal().getName());
+        if (id > 0) {
+            return id;
+        }
+        throw new Exception("Invalid User!");
+    }
+
     private SecurityContext getSecurityContext(int userId, ContainerRequestContext requestContext) {
         return new SecurityContext() {
             @Override

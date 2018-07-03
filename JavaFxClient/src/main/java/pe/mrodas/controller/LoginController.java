@@ -12,7 +12,7 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.VBox;
 import pe.mrodas.MainApp;
-import pe.mrodas.entity.User;
+import pe.mrodas.entity.Session;
 import pe.mrodas.model.RestClient;
 import pe.mrodas.worker.TaskLogin;
 import pe.wallet.imageprocess.util.JFXValidator;
@@ -20,7 +20,7 @@ import pe.wallet.imageprocess.util.JFXValidator;
 public class LoginController extends BaseController {
 
     @FXML
-    public VBox content;
+    private VBox content;
     @FXML
     private JFXTextField txtUsername;
     @FXML
@@ -30,7 +30,7 @@ public class LoginController extends BaseController {
     @FXML
     private ProgressController progressController;
 
-    private Service<User> loginService;
+    private Service<Session> loginService;
 
     public LoginController() {
         super("/fxml/Login.fxml");
@@ -41,13 +41,9 @@ public class LoginController extends BaseController {
     public void initialize() {
         txtUsername.getValidators().add(new JFXValidator.Required("Username required!"));
         password.getValidators().add(new JFXValidator.Required("Can't be empty!"));
-        this.setServices();
-    }
-
-    private void setServices() {
-        loginService = new Service<User>() {
+        loginService = new Service<Session>() {
             @Override
-            protected Task<User> createTask() {
+            protected Task<Session> createTask() {
                 return new TaskLogin(txtUsername.getText(), password.getText());
             }
         };
@@ -61,12 +57,27 @@ public class LoginController extends BaseController {
     }
 
     private void onLoginResponse(WorkerStateEvent e) {
-        User user = (User) e.getSource().getValue();
-        RestClient.setToken(user.getToken());
-        MainApp.session().setUser(user);
-        super.handle(() -> new MenuController()
-                .setDebugMode(MainApp.debugMode())
-                .prepareStage(btnLogin).show());
+        Session session = (Session) e.getSource().getValue();
+        String errorMessage = this.checkError(session);
+        if (errorMessage == null) {
+            MainApp.setSession(session);
+            RestClient.setToken(session.getUser().getToken());
+            super.handle(() -> new MenuController()
+                    .setDebugMode(MainApp.debugMode())
+                    .prepareStage(btnLogin).show());
+        } else {
+            super.dialogInfo(errorMessage);
+        }
+    }
+
+    private String checkError(Session session) {
+        if (session.getUser() == null) {
+            return "Bad Server Response: User Null";
+        }
+        if (session.getUser().getToken() == null) {
+            return "Bad Server Response: Token Null";
+        }
+        return null;
     }
 
     @FXML

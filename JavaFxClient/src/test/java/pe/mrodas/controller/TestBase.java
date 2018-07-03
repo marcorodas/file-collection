@@ -47,7 +47,7 @@ public abstract class TestBase extends ApplicationTest {
     public void start(Stage stage) throws Exception {
         if (!sessionUnset) {
             String workingDir = "C:\\Users\\skynet\\Desktop\\FilesCollectionTest";
-            MainApp.session()
+            MainApp.getSession()
                     .setWorkingDir(Paths.get(workingDir));
         }
         this.startTest(stage);

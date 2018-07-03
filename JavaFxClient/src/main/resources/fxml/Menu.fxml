@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.FlowPane?>
+
+<BorderPane xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="pe.mrodas.controller.MenuController">
+    <center>
+        <FlowPane fx:id="content" alignment="CENTER" columnHalignment="CENTER" hgap="5.0" vgap="5.0"
+                  BorderPane.alignment="CENTER">
+            <BorderPane.margin>
+                <Insets/>
+            </BorderPane.margin>
+            <padding>
+                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+            </padding>
+        </FlowPane>
+    </center>
+    <top>
+        <Label fx:id="lblNoButtons" text="No buttons for this user!" BorderPane.alignment="CENTER">
+            <BorderPane.margin>
+                <Insets bottom="40.0" top="40.0"/>
+            </BorderPane.margin>
+        </Label>
+    </top>
+</BorderPane>

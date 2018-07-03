@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -16,7 +17,7 @@ import java.util.stream.Stream;
 public class TaskImportFiles extends Task<Void> {
 
     private final List<File> fileList;
-    private final Path workingDir = MainApp.session().getWorkingDir();
+    private final Path workingDir = Paths.get(MainApp.getSession().getWorkingDir());
 
     public TaskImportFiles(List<File> fileList) {
         this.fileList = fileList;
