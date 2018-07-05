@@ -16,6 +16,7 @@ import pe.mrodas.worker.TaskSaveConfig;
 
 import java.io.File;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class WorkspaceController extends BaseController {
@@ -44,9 +45,10 @@ public class WorkspaceController extends BaseController {
     public void initialize() {
         content.disableProperty().bind(saveConfigService.runningProperty());
         progressController.setService(saveConfigService);
+        saveConfigService.setOnSucceeded(super::onServiceFailed);
     }
 
-    public WorkspaceController setOnSaveSuccess(Runnable runOnOkClick) {
+    WorkspaceController setOnSaveSuccess(Runnable runOnOkClick) {
         saveConfigService.setOnSucceeded(event -> {
             MainApp.getSession().setWorkingDir(txtWorkspace.getText());
             super.closeWindow();
@@ -64,7 +66,15 @@ public class WorkspaceController extends BaseController {
 
     @FXML
     public void btnBrowseOnClick(ActionEvent event) {
-        File file = new DirectoryChooser().showDialog(super.getStage(event));
+        DirectoryChooser chooser = new DirectoryChooser();
+        chooser.setTitle("Workspace Selection");
+        if (!txtWorkspace.getText().isEmpty()) {
+            Path path = Paths.get(txtWorkspace.getText());
+            if (Files.isDirectory(path)) {
+                chooser.setInitialDirectory(path.toFile());
+            }
+        }
+        File file = chooser.showDialog(super.getStage(event));
         if (file != null) {
             txtWorkspace.setText(file.getAbsolutePath());
         }

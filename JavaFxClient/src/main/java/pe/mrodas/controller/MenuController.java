@@ -87,8 +87,9 @@ public class MenuController extends BaseController {
                         .prepareStage(content)
                         .show();
                 break;
+            default:
+                super.dialogInfo("No Action Set");
         }
-        super.dialogInfo("No Action Set");
     }
 
     public enum Item {
