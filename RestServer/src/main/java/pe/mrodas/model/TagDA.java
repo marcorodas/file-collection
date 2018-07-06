@@ -2,7 +2,7 @@ package pe.mrodas.model;
 
 import lombok.experimental.UtilityClass;
 import pe.mrodas.entity.Tag;
-import pe.mrodas.jdbc.SqlInOperator;
+import pe.mrodas.helper.SqlInOperator;
 import pe.mrodas.jdbc.SqlInsert;
 import pe.mrodas.jdbc.SqlQuery;
 import pe.mrodas.jdbc.SqlUpdate;
@@ -12,6 +12,25 @@ import java.util.List;
 
 @UtilityClass
 public class TagDA {
+
+    public List<Tag> getCategories(int idRoot, int idUser) throws Exception {
+        return new SqlQuery<>(Tag.class).setSql(new String[]{
+                "SELECT T.idTag, T.name",
+                "    FROM tag T",
+                "    INNER JOIN category C",
+                "        ON C.idTag = T.idTag",
+                "        AND C.idRoot = T.idRoot",
+                "    INNER JOIN user_x_root UR",
+                "        ON UR.idRoot = T.idRoot",
+                "    WHERE T.idRoot = :idRoot",
+                "        AND UR.idUser = :idUser"
+        }).setMapper((mapper, tag, rs) -> {
+            mapper.map(tag::setIdTag, rs::getInt)
+                    .map(tag::setName, rs::getString);
+        }).addParameter("idRoot", idRoot)
+                .addParameter("idUser", idUser)
+                .executeList();
+    }
 
     public List<Tag> select(String namePart) throws Exception {
         return new SqlQuery<>(Tag.class).setSql(new String[]{

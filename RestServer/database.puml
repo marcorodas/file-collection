@@ -90,7 +90,7 @@ TABLE(file_item){
   PK(idFile) INTEGER NOT_NULL()
   UNIQUE(md5) CHAR(32) NOT_NULL()
   extension VARCHAR(10) NOT_NULL()
-  creation datetime NOT_NULL()
+  expiration datetime NOT_NULL()
 }
 
 TABLE(file_content){

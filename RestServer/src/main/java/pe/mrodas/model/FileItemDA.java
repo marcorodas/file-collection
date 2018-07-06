@@ -3,7 +3,7 @@ package pe.mrodas.model;
 import lombok.experimental.UtilityClass;
 import pe.mrodas.entity.FileItem;
 import pe.mrodas.entity.Tag;
-import pe.mrodas.jdbc.SqlInOperator;
+import pe.mrodas.helper.SqlInOperator;
 import pe.mrodas.jdbc.SqlInsert;
 import pe.mrodas.jdbc.SqlQuery;
 

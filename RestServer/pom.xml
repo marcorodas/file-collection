@@ -95,7 +95,7 @@
         <dependency>
             <groupId>com.github.marcorodas</groupId>
             <artifactId>simple-jdbc</artifactId>
-            <version>d783067</version>
+            <version>955493d</version>
         </dependency>
         <!-- JDBC Driver for MySQL -->
         <dependency>
