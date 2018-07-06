@@ -30,7 +30,7 @@ public class LoginController extends BaseController {
     @FXML
     private ProgressController progressController;
 
-    private Service<Session> loginService;
+    private Service<Session> serviceLogin;
 
     public LoginController() {
         super("/fxml/Login.fxml");
@@ -41,19 +41,19 @@ public class LoginController extends BaseController {
     public void initialize() {
         txtUsername.getValidators().add(new JFXValidator.Required("Username required!"));
         password.getValidators().add(new JFXValidator.Required("Can't be empty!"));
-        loginService = new Service<Session>() {
+        serviceLogin = new Service<Session>() {
             @Override
             protected Task<Session> createTask() {
                 return new TaskLogin(txtUsername.getText(), password.getText());
             }
         };
-        loginService.setOnSucceeded(this::onLoginResponse);
-        loginService.setOnFailed(event -> {
+        serviceLogin.setOnSucceeded(this::onLoginResponse);
+        serviceLogin.setOnFailed(event -> {
             super.onServiceFailed(event);
             txtUsername.requestFocus();
         });
-        content.disableProperty().bind(loginService.runningProperty());
-        progressController.setService(loginService);
+        content.disableProperty().bind(serviceLogin.runningProperty());
+        progressController.setService(serviceLogin);
     }
 
     private void onLoginResponse(WorkerStateEvent e) {
@@ -98,7 +98,7 @@ public class LoginController extends BaseController {
     @FXML
     public void btnLoginOnAction(ActionEvent e) {
         if (txtUsername.validate() && password.validate()) {
-            loginService.restart();
+            serviceLogin.restart();
         }
     }
 }

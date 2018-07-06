@@ -1,6 +1,7 @@
 package pe.mrodas.controller;
 
 import javafx.concurrent.WorkerStateEvent;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Dimension2D;
 import javafx.scene.Cursor;
@@ -14,15 +15,12 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import javafx.event.ActionEvent;
-
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 import pe.mrodas.helper.ExceptionAlert;
 
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -51,6 +49,7 @@ public abstract class BaseController {
     private Dimension2D dimension;
     private Stage stage, owner;
     private String title;
+    private Consumer<FXMLLoader> onFxmlLoaded;
     private boolean isResizable;
 
     /**
@@ -132,6 +131,14 @@ public abstract class BaseController {
                 .collect(Collectors.joining(" - "));
     }
 
+    public void setOnFxmlLoaded(Consumer<FXMLLoader> onFxmlLoaded) {
+        this.onFxmlLoaded = onFxmlLoaded;
+    }
+
+    <T> void setOnControllerReady(Consumer<T> onControllerReady) {
+        this.onFxmlLoaded = loader -> onControllerReady.accept(loader.getController());
+    }
+
     private void setAppIcons(Stage stage) {
         if (appIcons != null && stage.getIcons().isEmpty()) {
             appIcons.stream().map(Image::new).forEach(stage.getIcons()::add);
@@ -140,12 +147,15 @@ public abstract class BaseController {
 
     private Parent getRoot() throws IOException {
         URL url = this.getClass().getResource(fxmlFile);
-        if (this.hasController(url)) {
-            return FXMLLoader.load(url);
-        }
         FXMLLoader loader = new FXMLLoader(url);
-        loader.setController(this);
-        return loader.load();
+        if (!this.hasController(url)) {
+            loader.setController(this);
+        }
+        Parent parent = loader.load();
+        if (onFxmlLoaded != null) {
+            onFxmlLoaded.accept(loader);
+        }
+        return parent;
     }
 
     private boolean hasController(URL url) throws IOException {

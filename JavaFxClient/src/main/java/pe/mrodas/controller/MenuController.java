@@ -1,17 +1,16 @@
 package pe.mrodas.controller;
 
 import javafx.fxml.FXML;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.ContentDisplay;
+import javafx.scene.control.Label;
+import javafx.scene.control.ProgressBar;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.StackPane;
 import pe.mrodas.MainApp;
 import pe.mrodas.entity.Root;
-
-import java.awt.event.ActionEvent;
-import java.util.Optional;
-import java.util.function.Consumer;
 
 
 public class MenuController extends BaseController {
@@ -84,7 +83,7 @@ public class MenuController extends BaseController {
         switch (Item.get(id)) {
             case ANTIFUJIMORISMO:
                 new CollectionController()
-                        .prepareStage(content)
+                        .prepareStage(root, content)
                         .show();
                 break;
             default:

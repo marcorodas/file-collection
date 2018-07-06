@@ -31,7 +31,7 @@
         <SplitPane fx:id="splitPane" dividerPositions="0.5" prefHeight="160.0" style="-fx-box-border: transparent;" BorderPane.alignment="CENTER">
             <BorderPane>
                 <top>
-                    <ToolBar>
+                    <ToolBar minWidth="95.0">
                         <Button mnemonicParsing="false" onAction="#btnGetFilesOnClick" text="Get Files">
                             <graphic>
                                 <MaterialDesignIconView glyphName="IMPORT" size="16" strokeType="OUTSIDE" strokeWidth="0.0" />
