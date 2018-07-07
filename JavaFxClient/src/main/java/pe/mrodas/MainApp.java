@@ -20,7 +20,7 @@ import java.util.stream.Stream;
 public class MainApp extends Application {
 
     private static boolean debugMode = true;
-    private static Session session;
+    private static Session session = new Session();
 
     public static void setSession(Session session) {
         MainApp.session = session;

@@ -12,6 +12,10 @@ import javafx.scene.layout.StackPane;
 import pe.mrodas.MainApp;
 import pe.mrodas.entity.Root;
 
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 
 public class MenuController extends BaseController {
 
@@ -79,11 +83,16 @@ public class MenuController extends BaseController {
     }
 
     private void getBtnAction(Root root) throws Exception {
-        Integer id = root.getIdRoot();
-        switch (Item.get(id)) {
+        Item item = Item.get(root.getIdRoot());
+        Stream<String> stream = Stream.of("*.jpg", "*.jpeg", "*.gif", "*.png", "*.bmp");
+        if (item == Item.ANTIFUJIMORISMO || item == Item.MEMES) {
+            stream = Stream.concat(stream, Stream.of("*.mp4", "*.flv", "*.3gp"));
+        }
+        List<String> extensions = stream.collect(Collectors.toList());
+        switch (item) {
             case ANTIFUJIMORISMO:
                 new CollectionController()
-                        .prepareStage(root, content)
+                        .prepareStage(root, extensions, content)
                         .show();
                 break;
             default:

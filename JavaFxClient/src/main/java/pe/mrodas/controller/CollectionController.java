@@ -9,6 +9,7 @@ import pe.mrodas.entity.Root;
 
 import java.io.IOException;
 import java.security.InvalidParameterException;
+import java.util.List;
 
 public class CollectionController extends BaseController {
 
@@ -17,23 +18,28 @@ public class CollectionController extends BaseController {
 
     @Getter
     private final SimpleObjectProperty<Root> rootProperty = new SimpleObjectProperty<>();
+    @Getter
+    private final SimpleObjectProperty<List<String>> extensionsProperty = new SimpleObjectProperty<>();
 
     public CollectionController() {
         super("/fxml/Collection.fxml");
+        super.setResizable(true);
     }
 
-    Stage prepareStage(Root root, Node node) throws IOException {
+    Stage prepareStage(Root root, List<String> extensions, Node node) throws IOException {
         if (root == null) {
             throw new InvalidParameterException("root can't be null");
         }
-        super.<CollectionController>setOnControllerReady(ctrl -> ctrl.getRootProperty().set(root));
+        super.<CollectionController>setOnControllerReady(ctrl -> {
+            ctrl.getExtensionsProperty().set(extensions);
+            ctrl.getRootProperty().set(root);
+        });
         return super.prepareStage(node);
     }
 
     @Override
     public void initialize() {
-        rootProperty.addListener((o, old, root) -> {
-            collectionStageController.setRoot(root);
-        });
+        extensionsProperty.addListener((o, old, extensions) -> collectionStageController.setExtensions(extensions));
+        rootProperty.addListener((o, old, root) -> collectionStageController.setRoot(root));
     }
 }

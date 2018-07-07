@@ -8,10 +8,9 @@
 <?import javafx.scene.control.ToolBar?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.BorderPane?>
-<?import javafx.scene.layout.StackPane?>
 <?import org.controlsfx.control.GridView?>
 
-<BorderPane minWidth="700.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="pe.mrodas.controller.CollectionStageController">
+<BorderPane minWidth="900.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="pe.mrodas.controller.CollectionStageController">
     <bottom>
         <fx:include fx:id="progress" source="ProgressPane.fxml" />
     </bottom>
@@ -31,7 +30,7 @@
         <SplitPane fx:id="splitPane" dividerPositions="0.5" prefHeight="160.0" style="-fx-box-border: transparent;" BorderPane.alignment="CENTER">
             <BorderPane>
                 <top>
-                    <ToolBar minWidth="95.0">
+                    <ToolBar minWidth="100.0">
                         <Button mnemonicParsing="false" onAction="#btnGetFilesOnClick" text="Get Files">
                             <graphic>
                                 <MaterialDesignIconView glyphName="IMPORT" size="16" strokeType="OUTSIDE" strokeWidth="0.0" />
@@ -43,14 +42,12 @@
                     <GridView fx:id="gridFiles" cellHeight="100.0" cellWidth="100.0" horizontalCellSpacing="10.0" prefWidth="200.0" verticalCellSpacing="10.0" BorderPane.alignment="CENTER" />
                 </center>
             </BorderPane>
-            <BorderPane>
+            <BorderPane fx:id="imageContainer">
                 <center>
-                    <StackPane fx:id="imageContainer">
-                        <ImageView fx:id="imageView" fitHeight="200.0" fitWidth="200.0" pickOnBounds="true" preserveRatio="true" />
-                    </StackPane>
+                     <ImageView fx:id="imageView" pickOnBounds="true" preserveRatio="true" />
                 </center>
                 <top>
-                    <ToolBar minWidth="190.0" BorderPane.alignment="CENTER">
+                    <ToolBar fx:id="toolbar" disable="true" minWidth="190.0" BorderPane.alignment="CENTER">
                         <Label text="Send to:" />
                         <Button mnemonicParsing="false" onAction="#btnEditOnClick" text="Edit">
                             <graphic>
