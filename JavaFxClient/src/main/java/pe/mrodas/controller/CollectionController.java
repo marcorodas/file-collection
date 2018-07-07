@@ -23,7 +23,6 @@ public class CollectionController extends BaseController {
 
     public CollectionController() {
         super("/fxml/Collection.fxml");
-        super.setResizable(true);
     }
 
     Stage prepareStage(Root root, List<String> extensions, Node node) throws IOException {

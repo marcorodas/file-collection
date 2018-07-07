@@ -10,7 +10,7 @@
 <?import javafx.scene.layout.BorderPane?>
 <?import org.controlsfx.control.GridView?>
 
-<BorderPane minWidth="900.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="pe.mrodas.controller.CollectionStageController">
+<BorderPane minWidth="850.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="pe.mrodas.controller.CollectionStageController">
     <bottom>
         <fx:include fx:id="progress" source="ProgressPane.fxml" />
     </bottom>
@@ -22,7 +22,7 @@
                 </ToolBar>
             </top>
             <center>
-                <ListView fx:id="listCategories" focusTraversable="false" prefWidth="160.0" style="-fx-border-color: white;" BorderPane.alignment="CENTER" />
+                <ListView fx:id="listCategories" focusTraversable="false" prefWidth="140.0" style="-fx-border-color: white;" BorderPane.alignment="CENTER" />
             </center>
         </BorderPane>
     </left>
@@ -39,7 +39,7 @@
                     </ToolBar>
                 </top>
                 <center>
-                    <GridView fx:id="gridFiles" cellHeight="100.0" cellWidth="100.0" horizontalCellSpacing="10.0" prefWidth="200.0" verticalCellSpacing="10.0" BorderPane.alignment="CENTER" />
+                    <GridView fx:id="gridFiles" cellHeight="100.0" cellWidth="100.0" horizontalCellSpacing="5.0" prefWidth="200.0" verticalCellSpacing="5.0" BorderPane.alignment="CENTER" />
                 </center>
             </BorderPane>
             <BorderPane fx:id="imageContainer">
@@ -47,14 +47,13 @@
                      <ImageView fx:id="imageView" pickOnBounds="true" preserveRatio="true" />
                 </center>
                 <top>
-                    <ToolBar fx:id="toolbar" disable="true" minWidth="190.0" BorderPane.alignment="CENTER">
-                        <Label text="Send to:" />
-                        <Button mnemonicParsing="false" onAction="#btnEditOnClick" text="Edit">
+                    <ToolBar fx:id="toolbar" disable="true" minWidth="200.0" BorderPane.alignment="CENTER">
+                        <Button mnemonicParsing="false" onAction="#btnEditOnClick" text="To Edit">
                             <graphic>
                                 <MaterialDesignIconView glyphName="PENCIL" size="16" strokeType="OUTSIDE" strokeWidth="0.0" />
                             </graphic>
                         </Button>
-                        <Button layoutX="58.0" layoutY="10.0" mnemonicParsing="false" onAction="#btnTrashOnClick" text="Trash">
+                        <Button layoutX="58.0" layoutY="10.0" mnemonicParsing="false" onAction="#btnTrashOnClick" text="To Trash">
                             <graphic>
                                 <MaterialDesignIconView glyphName="DELETE" size="16" strokeType="OUTSIDE" strokeWidth="0.0" />
                             </graphic>

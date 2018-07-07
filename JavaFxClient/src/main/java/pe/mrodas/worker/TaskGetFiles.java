@@ -44,10 +44,12 @@ public class TaskGetFiles extends Task<List<File>> {
         if (!file.isDirectory()) {
             throw new IOException("Invalid directory:\n" + file.getAbsolutePath());
         }
-        File[] files = extensions == null ? file.listFiles() : file.listFiles(
-                pathname -> extensions.stream()
-                        .anyMatch(s -> pathname.getName().endsWith(s))
-        );
+        File[] files = file.listFiles(extensions == null ? null : this::filter);
         return files == null ? new ArrayList<>() : Arrays.asList(files);
     }
+
+    private boolean filter(File file) {
+        return extensions.stream().anyMatch(s -> file.getName().endsWith(s));
+    }
+
 }

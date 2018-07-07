@@ -4,14 +4,11 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
-import javafx.concurrent.WorkerStateEvent;
 import javafx.event.ActionEvent;
 import javafx.event.Event;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
@@ -19,6 +16,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.text.Text;
+import javafx.stage.FileChooser;
 import lombok.Getter;
 import org.controlsfx.control.GridCell;
 import org.controlsfx.control.GridView;
@@ -27,6 +25,7 @@ import pe.mrodas.entity.Root;
 import pe.mrodas.entity.Tag;
 import pe.mrodas.worker.TaskGetCategories;
 import pe.mrodas.worker.TaskGetFiles;
+import pe.mrodas.worker.TaskMoveFiles;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -58,7 +57,7 @@ public class CollectionStageController {
 
     private final SimpleObjectProperty<Root> rootProperty = new SimpleObjectProperty<>();
     private final SimpleObjectProperty<List<String>> extensionsProperty = new SimpleObjectProperty<>();
-    private final EventHandler<WorkerStateEvent> handler = new CollectionController()::onServiceFailed;
+    private final BaseController baseController = new CollectionController();
     private final String path = "stage";
     private Service<List<Tag>> serviceGetCategories;
     private Service<List<File>> serviceGetFiles;
@@ -80,13 +79,8 @@ public class CollectionStageController {
 
     public void initialize() {
         listCategories.addEventFilter(MouseEvent.MOUSE_PRESSED, Event::consume);
-        imageView.imageProperty().addListener(this::onImageIsSet);
         rootProperty.addListener((o, old, root) -> this.onRootReady(root));
         extensionsProperty.addListener((o, old, extensions) -> this.onExtensionsReady(extensions));
-    }
-
-    private void onImageIsSet(ObservableValue<? extends Image> o, Image old, Image image) {
-
     }
 
     private void onExtensionsReady(List<String> extensions) {
@@ -101,7 +95,7 @@ public class CollectionStageController {
             gridFiles.setItems(FXCollections.observableArrayList(files));
             gridFiles.setCellFactory(this::getGridCellFactory);
         });
-        serviceGetFiles.setOnFailed(handler);
+        serviceGetFiles.setOnFailed(baseController::onServiceFailed);
         splitPane.disableProperty().bind(serviceGetFiles.runningProperty());
         progressController.setService(serviceGetFiles);
         serviceGetFiles.start();
@@ -169,7 +163,7 @@ public class CollectionStageController {
             listCategories.setItems(FXCollections.observableArrayList(categories));
             listCategories.setCellFactory(list -> new ListCellTag());
         });
-        serviceGetCategories.setOnFailed(handler);
+        serviceGetCategories.setOnFailed(baseController::onServiceFailed);
         splitPane.disableProperty().bind(serviceGetCategories.runningProperty());
         progressController.setService(serviceGetCategories);
         serviceGetCategories.start();
@@ -188,6 +182,24 @@ public class CollectionStageController {
 
     @FXML
     public void btnGetFilesOnClick(ActionEvent actionEvent) {
+        FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("Images", extensionsProperty.get());
+        FileChooser chooser = new FileChooser();
+        chooser.getExtensionFilters().add(extFilter);
+        chooser.setTitle("Import Images");
+        List<File> files = chooser.showOpenMultipleDialog(baseController.getStage(actionEvent));
+        if (files != null && !files.isEmpty()) {
+            Service<Void> service = new Service<Void>() {
+                @Override
+                protected Task<Void> createTask() {
+                    return new TaskMoveFiles(files, MainApp.getSession().getWorkingDir(), path);
+                }
+            };
+            service.setOnSucceeded(event -> serviceGetFiles.restart());
+            service.setOnFailed(baseController::onServiceFailed);
+            splitPane.disableProperty().bind(service.runningProperty());
+            progressController.setService(service);
+            service.restart();
+        }
     }
 
     @FXML

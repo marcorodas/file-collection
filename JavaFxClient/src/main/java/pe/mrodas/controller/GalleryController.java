@@ -12,7 +12,6 @@ import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.stage.Window;
 import pe.mrodas.entity.Root;
-import pe.mrodas.worker.ServiceImportFiles;
 
 import java.io.File;
 import java.util.List;
@@ -30,7 +29,7 @@ public class GalleryController extends BaseController {
     @FXML
     public Separator separator;
 
-    private ServiceImportFiles serviceImportFiles;
+    //private ServiceImportFiles serviceImportFiles;
     private final Root selected;
 
     public GalleryController(Root selected) {
@@ -44,7 +43,7 @@ public class GalleryController extends BaseController {
     }
 
     private void setServices() {
-        serviceImportFiles = new ServiceImportFiles();
+        //serviceImportFiles = new ServiceImportFiles();
         /*BooleanProperty[] properties = new BooleanProperty[]{
                 txtService.visibleProperty(), txtService.managedProperty(),
                 progressBar.visibleProperty(), progressBar.managedProperty(),
@@ -53,8 +52,8 @@ public class GalleryController extends BaseController {
         for (BooleanProperty property : properties) {
             property.bind(serviceImportFiles.runningProperty());
         }*/
-        txtService.textProperty().bind(serviceImportFiles.messageProperty());
-        progressBar.progressProperty().bind(serviceImportFiles.progressProperty());
+        //txtService.textProperty().bind(serviceImportFiles.messageProperty());
+        //progressBar.progressProperty().bind(serviceImportFiles.progressProperty());
     }
 
     private List<File> getStageImportFiles(Window window) {
@@ -69,7 +68,7 @@ public class GalleryController extends BaseController {
     public void btnStageImportOnClick(ActionEvent actionEvent) {
         Window window = ((Node) actionEvent.getSource()).getScene().getWindow();
         List<File> selectedFiles = this.getStageImportFiles(window);
-        serviceImportFiles.setFileList(selectedFiles);
-        serviceImportFiles.restart();
+        //serviceImportFiles.setFileList(selectedFiles);
+        //serviceImportFiles.restart();
     }
 }
