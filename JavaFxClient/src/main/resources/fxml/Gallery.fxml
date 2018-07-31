@@ -17,13 +17,13 @@
 <?import javafx.scene.control.ToolBar?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Text?>
 
-<VBox prefHeight="513.0" prefWidth="800.0" spacing="5.0" xmlns="http://javafx.com/javafx/8.0.121"
-      xmlns:fx="http://javafx.com/fxml/1">
+<VBox prefHeight="513.0" prefWidth="800.0" spacing="5.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1">
     <padding>
-        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
     </padding>
     <TabPane prefHeight="472.0" prefWidth="790.0">
         <Tab closable="false" text="Stage">
@@ -34,13 +34,13 @@
                             <children>
                                 <Label text="Drag &amp; upload">
                                     <padding>
-                                        <Insets bottom="5.0" top="5.0"/>
+                                        <Insets bottom="5.0" top="5.0" />
                                     </padding>
                                 </Label>
-                                <ListView prefHeight="416.0" prefWidth="248.0"/>
+                                <ListView prefHeight="416.0" prefWidth="248.0" />
                             </children>
                             <padding>
-                                <Insets right="5.0"/>
+                                <Insets right="5.0" />
                             </padding>
                         </VBox>
                         <SplitPane dividerPositions="0.4" prefHeight="443.0" prefWidth="752.0">
@@ -51,42 +51,34 @@
                                             <items>
                                                 <Button mnemonicParsing="false" text="Import">
                                                     <graphic>
-                                                        <MaterialDesignIconView glyphName="IMPORT" size="16"
-                                                                                strokeType="OUTSIDE"
-                                                                                strokeWidth="0.0"/>
+                                                        <MaterialDesignIconView glyphName="IMPORT" size="16" strokeType="OUTSIDE" strokeWidth="0.0" />
                                                     </graphic>
                                                 </Button>
                                             </items>
                                         </ToolBar>
-                                        <ScrollPane hbarPolicy="NEVER" prefHeight="405.0" prefWidth="254.0"/>
+                                        <ScrollPane hbarPolicy="NEVER" prefHeight="405.0" prefWidth="254.0" />
                                     </children>
                                 </VBox>
                                 <VBox>
                                     <children>
                                         <ToolBar>
                                             <items>
-                                                <Label text="Send to:"/>
+                                                <Label text="Send to:" />
                                                 <Button mnemonicParsing="false" text="Edit">
                                                     <graphic>
-                                                        <MaterialDesignIconView glyphName="PENCIL" size="16"
-                                                                                strokeType="OUTSIDE"
-                                                                                strokeWidth="0.0"/>
+                                                        <MaterialDesignIconView glyphName="PENCIL" size="16" strokeType="OUTSIDE" strokeWidth="0.0" />
                                                     </graphic>
                                                 </Button>
-                                                <Button layoutX="58.0" layoutY="10.0" mnemonicParsing="false"
-                                                        text="Trash">
+                                                <Button layoutX="58.0" layoutY="10.0" mnemonicParsing="false" text="Trash">
                                                     <graphic>
-                                                        <MaterialDesignIconView glyphName="DELETE" size="16"
-                                                                                strokeType="OUTSIDE"
-                                                                                strokeWidth="0.0"/>
+                                                        <MaterialDesignIconView glyphName="DELETE" size="16" strokeType="OUTSIDE" strokeWidth="0.0" />
                                                     </graphic>
                                                 </Button>
                                             </items>
                                         </ToolBar>
                                         <ScrollPane>
                                             <content>
-                                                <ImageView fitHeight="402.0" fitWidth="380.0" pickOnBounds="true"
-                                                           preserveRatio="true"/>
+                                                <ImageView fitHeight="402.0" fitWidth="380.0" pickOnBounds="true" preserveRatio="true" />
                                             </content>
                                         </ScrollPane>
                                     </children>
@@ -97,33 +89,31 @@
                 </HBox>
             </content>
             <graphic>
-                <MaterialDesignIconView glyphName="FOLDER_IMAGE" size="16" strokeType="OUTSIDE" strokeWidth="0.0"/>
+                <MaterialDesignIconView glyphName="FOLDER_IMAGE" size="16" strokeType="OUTSIDE" strokeWidth="0.0" />
             </graphic>
         </Tab>
         <Tab closable="false" text="Imported">
             <graphic>
-                <MaterialDesignIconView glyphName="DATABASE" size="14" strokeType="OUTSIDE" strokeWidth="0.0"/>
+                <MaterialDesignIconView glyphName="DATABASE" size="14" strokeType="OUTSIDE" strokeWidth="0.0" />
             </graphic>
             <VBox>
                 <ToolBar>
                     <Button mnemonicParsing="false" text="Missing">
                         <graphic>
-                            <MaterialDesignIconView glyphName="BASKET_FILL" size="16"
-                                                    strokeType="OUTSIDE" strokeWidth="0.0"/>
+                            <MaterialDesignIconView glyphName="BASKET_FILL" size="16" strokeType="OUTSIDE" strokeWidth="0.0" />
                         </graphic>
                     </Button>
-                    <Separator orientation="VERTICAL"/>
-                    <Label layoutX="255.0" layoutY="14.0" text="Filter:"/>
-                    <ChoiceBox prefWidth="150.0"/>
-                    <Label text="Search:"/>
-                    <TextField fx:id="txtSearchTag" promptText="Search by tag"/>
+                    <Separator orientation="VERTICAL" />
+                    <Label layoutX="255.0" layoutY="14.0" text="Filter:" />
+                    <ChoiceBox prefWidth="150.0" />
+                    <Label text="Search:" />
+                    <TextField fx:id="txtSearchTag" promptText="Search by tag" />
                     <Button mnemonicParsing="false">
                         <graphic>
-                            <MaterialDesignIconView glyphName="FILTER_REMOVE" size="14"
-                                                    strokeType="OUTSIDE" strokeWidth="0.0"/>
+                            <MaterialDesignIconView glyphName="FILTER_REMOVE" size="14" strokeType="OUTSIDE" strokeWidth="0.0" />
                         </graphic>
                     </Button>
-                    <CheckBox mnemonicParsing="false" text="Untagged"/>
+                    <CheckBox mnemonicParsing="false" text="Untagged" />
                 </ToolBar>
                 <SplitPane dividerPositions="0.4" prefHeight="407.0" prefWidth="790.0">
                     <items>
@@ -131,38 +121,33 @@
                             <children>
                                 <Label fx:id="lblSelectedTags" text="Selected tags:" wrapText="true">
                                     <VBox.margin>
-                                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+                                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                                     </VBox.margin>
                                 </Label>
-                                <ListView orientation="HORIZONTAL" prefHeight="61.0" prefWidth="312.0"/>
-                                <ScrollPane hbarPolicy="NEVER" prefHeight="351.0" prefWidth="312.0"/>
+                                <ListView orientation="HORIZONTAL" prefHeight="61.0" prefWidth="312.0" />
+                                <ScrollPane hbarPolicy="NEVER" prefHeight="351.0" prefWidth="312.0" />
                             </children>
                         </VBox>
                         <VBox>
                             <children>
                                 <ToolBar>
                                     <items>
-                                        <Label text="Send to:"/>
+                                        <Label text="Send to:" />
                                         <Button mnemonicParsing="false" text="Edit">
                                             <graphic>
-                                                <MaterialDesignIconView glyphName="PENCIL" size="16"
-                                                                        strokeType="OUTSIDE"
-                                                                        strokeWidth="0.0"/>
+                                                <MaterialDesignIconView glyphName="PENCIL" size="16" strokeType="OUTSIDE" strokeWidth="0.0" />
                                             </graphic>
                                         </Button>
-                                        <Button layoutX="58.0" layoutY="10.0" mnemonicParsing="false"
-                                                text="Trash">
+                                        <Button layoutX="58.0" layoutY="10.0" mnemonicParsing="false" text="Trash">
                                             <graphic>
-                                                <MaterialDesignIconView glyphName="DELETE" size="16"
-                                                                        strokeType="OUTSIDE"
-                                                                        strokeWidth="0.0"/>
+                                                <MaterialDesignIconView glyphName="DELETE" size="16" strokeType="OUTSIDE" strokeWidth="0.0" />
                                             </graphic>
                                         </Button>
                                     </items>
                                 </ToolBar>
                                 <ScrollPane prefHeight="381.0" prefWidth="470.0">
                                     <content>
-                                        <ImageView pickOnBounds="true" preserveRatio="true"/>
+                                        <ImageView pickOnBounds="true" preserveRatio="true" />
                                     </content>
                                 </ScrollPane>
                             </children>
@@ -173,34 +158,43 @@
         </Tab>
         <Tab closable="false" text="Edit">
             <graphic>
-                <MaterialDesignIconView glyphName="PENCIL" size="16" strokeType="OUTSIDE" strokeWidth="0.0"/>
+                <MaterialDesignIconView glyphName="PENCIL" size="16" strokeType="OUTSIDE" strokeWidth="0.0" />
             </graphic>
             <content>
                 <SplitPane dividerPositions="0.4" prefHeight="407.0" prefWidth="790.0">
                     <items>
-                        <ScrollPane hbarPolicy="NEVER" prefHeight="351.0" prefWidth="312.0"/>
+                        <ScrollPane hbarPolicy="NEVER" prefHeight="351.0" prefWidth="312.0">
+                     <content>
+                        <StackPane prefHeight="100.0" prefWidth="100.0">
+                           <children>
+                              <CheckBox mnemonicParsing="false" style="-fx-background-color: transparent;">
+                                 <StackPane.margin>
+                                    <Insets left="-80.0" top="-85.0" />
+                                 </StackPane.margin>
+                              </CheckBox>
+                           </children>
+                        </StackPane>
+                     </content></ScrollPane>
                         <VBox>
                             <children>
                                 <ToolBar>
                                     <items>
-                                        <Label text="Send to:"/>
+                                        <Label text="Send to:" />
                                         <Button mnemonicParsing="false" text="Stage">
                                             <graphic>
-                                                <MaterialDesignIconView glyphName="FOLDER_IMAGE" size="16"
-                                                                        strokeType="OUTSIDE" strokeWidth="0.0"/>
+                                                <MaterialDesignIconView glyphName="FOLDER_IMAGE" size="16" strokeType="OUTSIDE" strokeWidth="0.0" />
                                             </graphic>
                                         </Button>
                                         <Button layoutX="58.0" layoutY="10.0" mnemonicParsing="false" text="Trash">
                                             <graphic>
-                                                <MaterialDesignIconView glyphName="DELETE" size="16"
-                                                                        strokeType="OUTSIDE" strokeWidth="0.0"/>
+                                                <MaterialDesignIconView glyphName="DELETE" size="16" strokeType="OUTSIDE" strokeWidth="0.0" />
                                             </graphic>
                                         </Button>
                                     </items>
                                 </ToolBar>
                                 <ScrollPane prefHeight="381.0" prefWidth="470.0">
                                     <content>
-                                        <ImageView pickOnBounds="true" preserveRatio="true"/>
+                                        <ImageView pickOnBounds="true" preserveRatio="true" />
                                     </content>
                                 </ScrollPane>
                             </children>
@@ -213,29 +207,27 @@
             <content>
                 <SplitPane dividerPositions="0.4" prefHeight="407.0" prefWidth="790.0">
                     <items>
-                        <ScrollPane hbarPolicy="NEVER" prefHeight="351.0" prefWidth="312.0"/>
+                        <ScrollPane hbarPolicy="NEVER" prefHeight="351.0" prefWidth="312.0" />
                         <VBox>
                             <children>
                                 <ToolBar>
                                     <items>
-                                        <Label text="Send to:"/>
+                                        <Label text="Send to:" />
                                         <Button layoutX="58.0" layoutY="10.0" mnemonicParsing="false" text="Stage">
                                             <graphic>
-                                                <MaterialDesignIconView glyphName="FOLDER_IMAGE" size="16"
-                                                                        strokeType="OUTSIDE" strokeWidth="0.0"/>
+                                                <MaterialDesignIconView glyphName="FOLDER_IMAGE" size="16" strokeType="OUTSIDE" strokeWidth="0.0" />
                                             </graphic>
                                         </Button>
                                         <Button mnemonicParsing="false" text="Edit">
                                             <graphic>
-                                                <MaterialDesignIconView glyphName="PENCIL" size="16"
-                                                                        strokeType="OUTSIDE" strokeWidth="0.0"/>
+                                                <MaterialDesignIconView glyphName="PENCIL" size="16" strokeType="OUTSIDE" strokeWidth="0.0" />
                                             </graphic>
                                         </Button>
                                     </items>
                                 </ToolBar>
                                 <ScrollPane prefHeight="381.0" prefWidth="470.0">
                                     <content>
-                                        <ImageView pickOnBounds="true" preserveRatio="true"/>
+                                        <ImageView pickOnBounds="true" preserveRatio="true" />
                                     </content>
                                 </ScrollPane>
                             </children>
@@ -244,12 +236,12 @@
                 </SplitPane>
             </content>
             <graphic>
-                <MaterialDesignIconView glyphName="DELETE" size="16" strokeType="OUTSIDE" strokeWidth="0.0"/>
+                <MaterialDesignIconView glyphName="DELETE" size="16" strokeType="OUTSIDE" strokeWidth="0.0" />
             </graphic>
         </Tab>
     </TabPane>
     <VBox>
-        <Text fx:id="txtService" text="{Service Message}"/>
-        <JFXProgressBar fx:id="progressBar" prefHeight="1.0" prefWidth="791.0"/>
+        <Text fx:id="txtService" text="{Service Message}" />
+        <JFXProgressBar fx:id="progressBar" prefHeight="1.0" prefWidth="791.0" />
     </VBox>
 </VBox>

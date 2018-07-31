@@ -4,43 +4,40 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
-import javafx.event.Event;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.text.Text;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
-import lombok.Getter;
 import org.controlsfx.control.GridCell;
 import org.controlsfx.control.GridView;
+import org.controlsfx.control.SegmentedButton;
 import pe.mrodas.MainApp;
 import pe.mrodas.entity.Root;
 import pe.mrodas.entity.Tag;
+import pe.mrodas.helper.GuiHelper;
 import pe.mrodas.worker.TaskGetCategories;
 import pe.mrodas.worker.TaskGetFiles;
 import pe.mrodas.worker.TaskMoveFiles;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.security.InvalidParameterException;
 import java.util.List;
-import java.util.function.BiFunction;
+import java.util.function.Consumer;
 
 
 public class CollectionStageController {
 
-    @FXML
-    public Label lblDragStatus;
-    @FXML
-    public ListView<Tag> listCategories;
     @FXML
     public SplitPane splitPane;
     @FXML
@@ -51,6 +48,16 @@ public class CollectionStageController {
     public BorderPane imageContainer;
     @FXML
     public ToolBar toolbar;
+    @FXML
+    public HBox tagButtons;
+    @FXML
+    public Button btnUpload;
+    @FXML
+    public GridView<File> gridUpload;
+    @FXML
+    public Label lblNumFilesUpload;
+    @FXML
+    public Label lblTotal;
 
     @FXML
     private ProgressController progressController;
@@ -62,6 +69,7 @@ public class CollectionStageController {
     private Service<List<Tag>> serviceGetCategories;
     private Service<List<File>> serviceGetFiles;
     private File selectedFile;
+    private Tag selectedTag;
 
     void setRoot(Root root) {
         if (root == null) {
@@ -78,9 +86,21 @@ public class CollectionStageController {
     }
 
     public void initialize() {
-        listCategories.addEventFilter(MouseEvent.MOUSE_PRESSED, Event::consume);
         rootProperty.addListener((o, old, root) -> this.onRootReady(root));
         extensionsProperty.addListener((o, old, extensions) -> this.onExtensionsReady(extensions));
+        gridUpload.setItems(FXCollections.observableArrayList());
+        gridUpload.itemsProperty().get().addListener((ListChangeListener<? super File>) c -> {
+            int size = c.getList().size();
+            lblNumFilesUpload.setText(String.valueOf(size));
+        });
+        gridUpload.setCellFactory(param -> new GridCellImage(this::setImageView, file -> {
+            gridFiles.getItems().add(0, file);
+            gridUpload.getItems().remove(file);
+            if (gridUpload.getItems().isEmpty()) {
+                btnUpload.setDisable(true);
+            }
+        }));
+        System.out.println("Collection Stage!");
     }
 
     private void onExtensionsReady(List<String> extensions) {
@@ -92,8 +112,20 @@ public class CollectionStageController {
         };
         serviceGetFiles.setOnSucceeded(event -> {
             List<File> files = serviceGetFiles.getValue();
+            String len = String.valueOf(files.size());
+            lblTotal.setText(len);
             gridFiles.setItems(FXCollections.observableArrayList(files));
-            gridFiles.setCellFactory(this::getGridCellFactory);
+            gridFiles.itemsProperty().get().addListener((ListChangeListener<? super File>) c -> {
+                int size = c.getList().size();
+                lblTotal.setText(String.valueOf(size));
+            });
+            gridFiles.setCellFactory(param -> new GridCellImage(this::setImageView, file -> {
+                gridUpload.getItems().add(file);
+                gridFiles.getItems().remove(file);
+                if (selectedTag != null) {
+                    btnUpload.setDisable(false);
+                }
+            }));
         });
         serviceGetFiles.setOnFailed(baseController::onServiceFailed);
         splitPane.disableProperty().bind(serviceGetFiles.runningProperty());
@@ -101,24 +133,19 @@ public class CollectionStageController {
         serviceGetFiles.start();
     }
 
-    private GridCell<File> getGridCellFactory(GridView<File> gridView) {
-        GridCellImage cell = new GridCellImage();
-        cell.setOnMouseClicked(e -> {
-            File file = gridFiles.getItems().get(cell.getIndex());
-            if (!file.equals(selectedFile)) {
-                Image image = cell.getImageCreator().apply(file, null);
-                if (image != null) {
-                    imageView.setImage(image);
-                    imageView.fitWidthProperty().unbind();
-                    double maxHeight = gridFiles.getHeight() - 10d;
-                    DoubleBinding dividerWidth = this.getDividerWidth(image, maxHeight);
-                    imageView.fitWidthProperty().bind(dividerWidth);
-                    toolbar.setDisable(false);
-                    selectedFile = file;
-                }
+    private void setImageView(File file) {
+        if (!file.equals(selectedFile)) {
+            Image image = GuiHelper.getImageFromFile(file, null);
+            if (image != null) {
+                imageView.setImage(image);
+                imageView.fitWidthProperty().unbind();
+                double maxHeight = gridFiles.getHeight() - 10d;
+                DoubleBinding dividerWidth = this.getDividerWidth(image, maxHeight);
+                imageView.fitWidthProperty().bind(dividerWidth);
+                toolbar.setDisable(false);
+                selectedFile = file;
             }
-        });
-        return cell;
+        }
     }
 
     private DoubleBinding getDividerWidth(Image image, double maxHeight) {
@@ -129,21 +156,31 @@ public class CollectionStageController {
     }
 
     class GridCellImage extends GridCell<File> {
-        @Getter
-        private final BiFunction<File, Integer, Image> imageCreator = (file, size) -> {
-            try (FileInputStream stream = new FileInputStream(file)) {
-                return size == null ? new Image(stream)
-                        : new Image(stream, size, size, true, true);
-            } catch (IOException e) {
-                return null;
+        private final Consumer<File> onMouseSingleClick, onMouseDoubleClick;
+
+        GridCellImage(Consumer<File> onMouseSingleClick, Consumer<File> onMouseDoubleClick) {
+            this.onMouseSingleClick = onMouseSingleClick;
+            this.onMouseDoubleClick = onMouseDoubleClick;
+            this.setOnMouseClicked(this::onMouseClick);
+        }
+
+        void onMouseClick(MouseEvent e) {
+            int clickCount = e.getClickCount();
+            if (clickCount > 0) {
+                File item = this.getItem();
+                if (clickCount == 1) {
+                    onMouseSingleClick.accept(item);
+                } else if (onMouseDoubleClick != null) {
+                    onMouseDoubleClick.accept(item);
+                }
             }
-        };
+        }
 
         @Override
         protected void updateItem(File file, boolean empty) {
             super.updateItem(file, empty);
             if (!empty && file != null) {
-                Image image = imageCreator.apply(file, 100);
+                Image image = GuiHelper.getImageFromFile(file, 100);
                 if (image != null) {
                     this.setGraphic(new ImageView(image));
                 }
@@ -159,9 +196,15 @@ public class CollectionStageController {
             }
         };
         serviceGetCategories.setOnSucceeded(event -> {
-            List<Tag> categories = serviceGetCategories.getValue();
-            listCategories.setItems(FXCollections.observableArrayList(categories));
-            listCategories.setCellFactory(list -> new ListCellTag());
+            List<Tag> tags = serviceGetCategories.getValue();
+            ToggleButton[] buttons = tags.stream().map(tag -> {
+                ToggleButton toggle = new ToggleButton(tag.getName());
+                toggle.setUserData(tag);
+                return toggle;
+            }).toArray(ToggleButton[]::new);
+            SegmentedButton groupBtns = new SegmentedButton(buttons);
+            tagButtons.getChildren().setAll(groupBtns);
+            groupBtns.getToggleGroup().selectedToggleProperty().addListener(this::onCategorySelectionChange);
         });
         serviceGetCategories.setOnFailed(baseController::onServiceFailed);
         splitPane.disableProperty().bind(serviceGetCategories.runningProperty());
@@ -169,15 +212,9 @@ public class CollectionStageController {
         serviceGetCategories.start();
     }
 
-    class ListCellTag extends ListCell<Tag> {
-        @Override
-        protected void updateItem(Tag item, boolean empty) {
-            super.updateItem(item, empty);
-            if (!empty && item != null) {
-                Text text = new Text(item.getName());
-                this.setGraphic(text);
-            }
-        }
+    private void onCategorySelectionChange(ObservableValue<? extends Toggle> o, Toggle old, Toggle toggle) {
+        btnUpload.setDisable(toggle == null || gridUpload.getItems().isEmpty());
+        selectedTag = (toggle == null) ? null : (Tag) toggle.getUserData();
     }
 
     @FXML
@@ -203,12 +240,19 @@ public class CollectionStageController {
     }
 
     @FXML
-    public void btnEditOnClick(ActionEvent actionEvent) {
+    public void btnEditOnClick(ActionEvent e) {
     }
 
     @FXML
-    public void btnTrashOnClick(ActionEvent actionEvent) {
+    public void btnTrashOnClick(ActionEvent e) {
     }
 
+    @FXML
+    public void btnUploadOnClick(ActionEvent e) {
+    }
+
+    @FXML
+    public void btnGetFromUrlOnClick(ActionEvent event) {
+    }
 
 }

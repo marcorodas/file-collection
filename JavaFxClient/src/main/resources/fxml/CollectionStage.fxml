@@ -1,33 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import de.jensd.fx.glyphs.materialdesignicons.MaterialDesignIconView?>
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.SplitPane?>
 <?import javafx.scene.control.ToolBar?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
 <?import org.controlsfx.control.GridView?>
 
-<BorderPane minWidth="850.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="pe.mrodas.controller.CollectionStageController">
+<BorderPane minWidth="925.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="pe.mrodas.controller.CollectionStageController">
     <bottom>
         <fx:include fx:id="progress" source="ProgressPane.fxml" />
     </bottom>
-    <left>
-        <BorderPane style="-fx-border-color: #e3e3e3; -fx-border-width: 0 1 0 0;">
-            <top>
-                <ToolBar minHeight="36.0" BorderPane.alignment="CENTER">
-                    <Label fx:id="lblDragStatus" text="Drag &amp; upload" />
-                </ToolBar>
-            </top>
-            <center>
-                <ListView fx:id="listCategories" focusTraversable="false" prefWidth="140.0" style="-fx-border-color: white;" BorderPane.alignment="CENTER" />
-            </center>
-        </BorderPane>
-    </left>
-    <center>
-        <SplitPane fx:id="splitPane" dividerPositions="0.5" prefHeight="160.0" style="-fx-box-border: transparent;" BorderPane.alignment="CENTER">
+    <top>
+        <SplitPane fx:id="splitPane" dividerPositions="0.5" prefHeight="450.0" style="-fx-box-border: transparent;" BorderPane.alignment="CENTER">
             <BorderPane>
                 <top>
                     <ToolBar minWidth="100.0">
@@ -36,15 +27,30 @@
                                 <MaterialDesignIconView glyphName="IMPORT" size="16" strokeType="OUTSIDE" strokeWidth="0.0" />
                             </graphic>
                         </Button>
+                  <Button layoutX="10.0" layoutY="10.0" mnemonicParsing="false" onAction="#btnGetFromUrlOnClick" text="Get From Url">
+                     <graphic>
+                        <MaterialDesignIconView glyphName="WEB" size="16" strokeType="OUTSIDE" strokeWidth="0.0" />
+                     </graphic>
+                  </Button>
+                        <Label text="Total:">
+                            <font>
+                                <Font name="System Bold" size="12.0" />
+                            </font>
+                        </Label>
+                        <Label fx:id="lblTotal" text="{total}">
+                            <font>
+                                <Font name="System Bold" size="12.0" />
+                            </font>
+                        </Label>
                     </ToolBar>
                 </top>
                 <center>
-                    <GridView fx:id="gridFiles" cellHeight="100.0" cellWidth="100.0" horizontalCellSpacing="5.0" prefWidth="200.0" verticalCellSpacing="5.0" BorderPane.alignment="CENTER" />
+                    <GridView fx:id="gridFiles" cellHeight="100.0" cellWidth="100.0" horizontalCellSpacing="5.0" verticalCellSpacing="5.0" BorderPane.alignment="CENTER" />
                 </center>
             </BorderPane>
             <BorderPane fx:id="imageContainer">
                 <center>
-                     <ImageView fx:id="imageView" pickOnBounds="true" preserveRatio="true" />
+                    <ImageView fx:id="imageView" pickOnBounds="true" preserveRatio="true" />
                 </center>
                 <top>
                     <ToolBar fx:id="toolbar" disable="true" minWidth="200.0" BorderPane.alignment="CENTER">
@@ -62,5 +68,39 @@
                 </top>
             </BorderPane>
         </SplitPane>
+    </top>
+    <center>
+        <VBox spacing="5.0" style="-fx-border-style: solid none none none; -fx-border-color: #cfcfcf;" BorderPane.alignment="CENTER">
+            <BorderPane.margin>
+                <Insets />
+            </BorderPane.margin>
+            <padding>
+                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+            </padding>
+            <HBox spacing="5.0">
+                <children>
+                    <Label text="Files to Upload:">
+                        <font>
+                            <Font name="System Bold" size="12.0" />
+                        </font>
+                    </Label>
+                    <Label fx:id="lblNumFilesUpload" text="0">
+                        <font>
+                            <Font name="System Bold" size="12.0" />
+                        </font>
+                    </Label>
+                </children>
+            </HBox>
+            <GridView fx:id="gridUpload" cellHeight="100.0" cellWidth="100.0" horizontalCellSpacing="5.0" prefHeight="115.0" style="-fx-border-color: #cfcfcf;" verticalCellSpacing="5.0" />
+            <HBox alignment="CENTER_LEFT" spacing="5.0">
+                  <Label alignment="CENTER" text="Category:" />
+                <HBox fx:id="tagButtons" />
+                <Button fx:id="btnUpload" disable="true" mnemonicParsing="false" onAction="#btnUploadOnClick" text="Upload">
+                    <graphic>
+                        <MaterialDesignIconView glyphName="UPLOAD" size="16" strokeType="OUTSIDE" strokeWidth="0.0" />
+                    </graphic>
+                </Button>
+            </HBox>
+        </VBox>
     </center>
 </BorderPane>

@@ -15,6 +15,8 @@ public class CollectionController extends BaseController {
 
     @FXML
     private CollectionStageController collectionStageController;
+    @FXML
+    private CollectionImportedController collectionImportedController;
 
     @Getter
     private final SimpleObjectProperty<Root> rootProperty = new SimpleObjectProperty<>();
@@ -38,6 +40,7 @@ public class CollectionController extends BaseController {
 
     @Override
     public void initialize() {
+        System.out.println("Collection");
         extensionsProperty.addListener((o, old, extensions) -> collectionStageController.setExtensions(extensions));
         rootProperty.addListener((o, old, root) -> collectionStageController.setRoot(root));
     }
