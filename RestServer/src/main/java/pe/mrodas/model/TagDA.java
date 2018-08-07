@@ -9,6 +9,7 @@ import pe.mrodas.jdbc.SqlUpdate;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.DoubleStream;
 
 @UtilityClass
 public class TagDA {
@@ -25,36 +26,21 @@ public class TagDA {
                 "    WHERE T.idRoot = :idRoot",
                 "        AND UR.idUser = :idUser"
         }).setMapper((mapper, tag, rs) -> {
-            mapper.map(tag::setIdTag, rs::getInt)
-                    .map(tag::setName, rs::getString);
+            mapper.map(tag::setIdTag, rs::getInt);
+            mapper.map(tag::setName, rs::getString);
         }).addParameter("idRoot", idRoot)
                 .addParameter("idUser", idUser)
                 .executeList();
     }
 
-    public List<Tag> select(String namePart) throws Exception {
-        return new SqlQuery<>(Tag.class).setSql(new String[]{
-                "SELECT idTag, name",
-                "   FROM tag",
-                "   WHERE name LIKE :name_part"
-        }).setMapper((mapper, result, rs) -> {
-            mapper.map(result::setIdTag, rs::getInt)
-                    .map(result::setName, rs::getString);
-        }).addParameter("name_part", '%' + namePart + '%')
-                .executeList();
-    }
-
-    public void save(Tag tag) throws Exception {
+    public Tag save(int idRoot, Tag tag) throws Exception {
         if (tag.getIdTag() == null) {
             new SqlInsert("tag", tag::setIdTag)
-                    .addField("name", tag.getName())
-                    .execute();
-        } else {
-            new SqlUpdate("tag")
-                    .addFilter("idTag", tag.getIdTag())
+                    .addField("idRoot", idRoot)
                     .addField("name", tag.getName())
                     .execute();
         }
+        return tag;
     }
 
     public void delete(Tag tag) throws Exception {
@@ -69,5 +55,24 @@ public class TagDA {
         SqlQuery<?> query = new SqlQuery<>().setSql("DELETE FROM tag WHERE idTag IN " + inIdTags);
         inIdTags.getParameters().forEach(query::addParameter);
         query.execute();
+    }
+
+    public List<Tag> getTags(int idRoot, int idUser, String hint) throws Exception {
+        return new SqlQuery<>(Tag.class).setSql(new String[]{
+                "SELECT T.idTag, T.name",
+                "    FROM tag T",
+                "    INNER JOIN user_x_root UR",
+                "        ON UR.idRoot = T.idRoot",
+                "    WHERE T.idRoot = :idRoot",
+                "        AND UR.idUser = :idUser",
+                "        AND T.name LIKE :hint",
+                "    LIMIT 10"
+        }).setMapper((mapper, tag, rs) -> {
+            mapper.map(tag::setIdTag, rs::getInt);
+            mapper.map(tag::setName, rs::getString);
+        }).addParameter("idRoot", idRoot)
+                .addParameter("idUser", idUser)
+                .addParameter("hint", "%" + hint + "%")
+                .executeList();
     }
 }

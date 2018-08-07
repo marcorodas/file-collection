@@ -19,7 +19,7 @@ public class ProgressController {
 
     private final SimpleObjectProperty<Service<?>> serviceObjectProperty = new SimpleObjectProperty<>();
 
-    public void setService(Service<?> service) {
+    void bindService(Service<?> service) {
         serviceObjectProperty.set(service);
     }
 

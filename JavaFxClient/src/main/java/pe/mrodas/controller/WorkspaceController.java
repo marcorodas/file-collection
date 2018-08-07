@@ -12,7 +12,8 @@ import javafx.stage.DirectoryChooser;
 import pe.mrodas.MainApp;
 import pe.mrodas.entity.Config;
 import pe.mrodas.entity.Environment;
-import pe.mrodas.worker.TaskSaveConfig;
+import pe.mrodas.model.ConfigModel;
+import pe.mrodas.model.RestClient;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -20,6 +21,22 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class WorkspaceController extends BaseController {
+
+    class TaskSaveConfig extends Task<Void> {
+        private final boolean isNew;
+        private final Config config;
+
+        public TaskSaveConfig(boolean isNew, Config config) {
+            this.isNew = isNew;
+            this.config = config;
+        }
+
+        @Override
+        protected Void call() throws Exception {
+            super.updateMessage("Saving config...");
+            return RestClient.execute(ConfigModel.class, model -> isNew ? model.insert(config) : model.update(config));
+        }
+    }
 
     @FXML
     private VBox content;
@@ -36,6 +53,7 @@ public class WorkspaceController extends BaseController {
         }
     };
 
+
     public WorkspaceController() {
         super("/fxml/Workspace.fxml");
         this.setTitle("Workspace Selection");
@@ -44,7 +62,7 @@ public class WorkspaceController extends BaseController {
     @Override
     public void initialize() {
         content.disableProperty().bind(serviceSaveConfig.runningProperty());
-        progressController.setService(serviceSaveConfig);
+        progressController.bindService(serviceSaveConfig);
         serviceSaveConfig.setOnSucceeded(super::onServiceFailed);
     }
 

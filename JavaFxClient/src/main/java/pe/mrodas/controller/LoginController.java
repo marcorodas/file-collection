@@ -12,12 +12,31 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.VBox;
 import pe.mrodas.MainApp;
+import pe.mrodas.entity.Credential;
+import pe.mrodas.entity.Environment;
 import pe.mrodas.entity.Session;
+import pe.mrodas.model.LoginModel;
 import pe.mrodas.model.RestClient;
-import pe.mrodas.worker.TaskLogin;
 import pe.wallet.imageprocess.util.JFXValidator;
 
 public class LoginController extends BaseController {
+
+    class TaskLogin extends Task<Session> {
+
+        private final Credential credential;
+
+        public TaskLogin(String user, String pass) {
+            credential = new Credential()
+                    .setUsername(user).setPassword(pass)
+                    .setEnvironment(Environment.get());
+        }
+
+        @Override
+        protected Session call() throws Exception {
+            super.updateMessage("Authenticating...");
+            return RestClient.execute(LoginModel.class, model -> model.auth(credential));
+        }
+    }
 
     @FXML
     private VBox content;
@@ -53,7 +72,7 @@ public class LoginController extends BaseController {
             txtUsername.requestFocus();
         });
         content.disableProperty().bind(serviceLogin.runningProperty());
-        progressController.setService(serviceLogin);
+        progressController.bindService(serviceLogin);
     }
 
     private void onLoginResponse(WorkerStateEvent e) {

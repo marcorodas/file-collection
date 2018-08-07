@@ -1,21 +1,26 @@
 package pe.mrodas.helper;
 
+import com.jfoenix.controls.JFXAutoCompletePopup;
+import com.jfoenix.controls.JFXSpinner;
 import de.jensd.fx.glyphs.materialdesignicons.MaterialDesignIcon;
 import de.jensd.fx.glyphs.materialdesignicons.MaterialDesignIconView;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Service;
+import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
+import javafx.scene.control.ListCell;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.text.Text;
+import lombok.Data;
 import lombok.Getter;
-import org.controlsfx.control.textfield.AutoCompletionBinding;
-import org.controlsfx.control.textfield.TextFields;
+import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,25 +29,40 @@ import java.util.stream.Collectors;
 
 /**
  * https://stackoverflow.com/questions/37378973/implement-tags-bar-in-javafx
+ * https://stackoverflow.com/questions/36861056/javafx-textfield-auto-suggestions
  */
-public class TagBar extends HBox {
+public class TagBar<T> extends HBox {
+    private final Function<T, String> toString;
+    private final JFXAutoCompletePopup<T> autoCompletePopup = new JFXAutoCompletePopup<>();
     @Getter
-    private final ObservableList<String> tags = FXCollections.observableArrayList();
+    private final ObservableList<T> tags = FXCollections.observableArrayList();
     @Getter
     private final TextField inputTextField = new TextField();
+    @Setter
+    private Runnable onSuggestionIsSelected;
 
-    public TagBar() {
+    private TagBar(Function<T, String> toString) {
+        this.toString = toString;
         getStyleClass().setAll("tag-bar");
         getStylesheets().add("styles/TagBar.css");
         tags.addListener(this::onChanged);
-        inputTextField.setPromptText("Search by tag...");
-        inputTextField.setOnAction(e -> {
-            String text = inputTextField.getText().trim();
-            if (!text.isEmpty() && !tags.contains(text)) {
-                tags.add(text);
-                inputTextField.clear();
+        autoCompletePopup.setSuggestionsCellFactory(param -> new ListCell<T>() {
+            @Override
+            protected void updateItem(T item, boolean empty) {
+                super.updateItem(item, empty);
+                if (!empty && item != null) {
+                    this.setGraphic(new Text(toString.apply(item)));
+                }
             }
         });
+        autoCompletePopup.setSelectionHandler(e -> {
+            tags.add(e.getObject());
+            inputTextField.clear();
+            if (onSuggestionIsSelected != null) {
+                onSuggestionIsSelected.run();
+            }
+        });
+        inputTextField.setPromptText("Search by tag...");
         inputTextField.setOnKeyPressed(e -> {
             if (inputTextField.getText().isEmpty() && e.getCode() == KeyCode.BACK_SPACE && !tags.isEmpty()) {
                 tags.remove(tags.size() - 1);
@@ -61,7 +81,87 @@ public class TagBar extends HBox {
         getChildren().add(inputTextField);
     }
 
-    private void onChanged(ListChangeListener.Change<? extends String> change) {
+    public TagBar(Function<T, String> toString, List<T> suggestionList) {
+        this(toString);
+        autoCompletePopup.getSuggestions().setAll(suggestionList);
+        inputTextField.textProperty().addListener((observable, oldHint, newHint) -> {
+            if (newHint != null && !newHint.trim().isEmpty()) {
+                if (oldHint == null || !newHint.trim().toLowerCase().equals(oldHint.trim().toLowerCase())) {
+                    autoCompletePopup.filter(t -> toString.apply(t).equals(newHint));
+                    if (autoCompletePopup.getFilteredSuggestions().isEmpty()) {
+                        autoCompletePopup.hide();
+                    } else {
+                        autoCompletePopup.show(inputTextField);
+                    }
+                }
+            }
+        });
+    }
+
+    public interface SugestionProvider<T> {
+        List<T> apply(String hint) throws Exception;
+    }
+
+    @Data
+    private class SuggestionService extends Service<List<T>> {
+        private final SugestionProvider<T> suggestionProvider;
+        @Setter
+        private String hint;
+
+        @Override
+        protected Task<List<T>> createTask() {
+            return new Task<List<T>>() {
+                @Override
+                protected List<T> call() throws Exception {
+                    return suggestionProvider.apply(hint);
+                }
+            };
+        }
+    }
+
+    public TagBar(Function<T, String> toString, SugestionProvider<T> suggestionProvider) {
+        this(toString);
+        JFXSpinner spinner = new JFXSpinner();
+        MaterialDesignIconView iconView = new MaterialDesignIconView(MaterialDesignIcon.WIFI_OFF);
+        iconView.setSize("20");
+        SuggestionService service = new SuggestionService(suggestionProvider);
+        service.setOnSucceeded(event -> {
+            getChildren().remove(iconView);
+            getChildren().remove(spinner);
+            List<T> suggestions = service.getValue().stream()
+                    .filter(t -> !tags.contains(t))
+                    .collect(Collectors.toList());
+            autoCompletePopup.getSuggestions().setAll(suggestions);
+            if (suggestions.isEmpty()) {
+                autoCompletePopup.hide();
+            } else {
+                autoCompletePopup.show(inputTextField);
+            }
+        });
+        service.setOnFailed(event -> {
+            getChildren().remove(spinner);
+            if (!getChildren().contains(iconView)) {
+                getChildren().add(iconView);
+            }
+        });
+        service.setOnRunning(event -> {
+            getChildren().remove(iconView);
+            if (!getChildren().contains(spinner)) {
+                getChildren().add(spinner);
+            }
+        });
+        inputTextField.textProperty().addListener((observable, oldHint, newHint) -> {
+            if (newHint != null && !newHint.trim().isEmpty()) {
+                if (oldHint == null || !newHint.trim().toLowerCase().equals(oldHint.trim().toLowerCase())) {
+                    autoCompletePopup.getSuggestions().clear();
+                    service.setHint(newHint);
+                    service.restart();
+                }
+            }
+        });
+    }
+
+    private void onChanged(ListChangeListener.Change<? extends T> change) {
         while (change.next()) {
             if (change.wasPermutated()) {
                 ArrayList<Node> newSublist = new ArrayList<>(change.getTo() - change.getFrom());
@@ -84,40 +184,16 @@ public class TagBar extends HBox {
         }
     }
 
-    public void add(String s) {
-        if (!tags.contains(s)) {
-            tags.add(s);
-        }
-    }
-
-    public void setAutoCompletion(Function<String, List<String>> hintToSuggestionList) {
-        this.setAutoCompletion(hintToSuggestionList, null);
-    }
-
-    public void setAutoCompletion(Function<String, List<String>> hintToSuggestionList, Runnable onAutoCompleted) {
-        AutoCompletionBinding<String> autoCompletion = TextFields.bindAutoCompletion(inputTextField, param -> {
-            String hint = param.getUserText();
-            return hintToSuggestionList.apply(hint);
-        });
-        autoCompletion.setOnAutoCompleted(event -> {
-            this.add(event.getCompletion());
-            inputTextField.clear();
-            if (onAutoCompleted != null) {
-                onAutoCompleted.run();
-            }
-        });
-    }
-
     private class Tag extends HBox {
 
-        public Tag(String tag) {
+        Tag(T tag) {
             getStyleClass().setAll("tag");
             Button removeButton = new Button();
             removeButton.setPadding(Insets.EMPTY);
             MaterialDesignIconView iconView = new MaterialDesignIconView(MaterialDesignIcon.CLOSE_CIRCLE);
             removeButton.setGraphic(iconView);
             removeButton.setOnAction((evt) -> tags.remove(tag));
-            Text text = new Text(tag);
+            Text text = new Text(toString.apply(tag));
             getChildren().addAll(text, removeButton);
         }
     }

@@ -10,6 +10,6 @@ import java.util.List;
 public interface TagModel {
     @GET("tag/categories")
     Call<List<Tag>> getCategories(@Query("root") int idRoot);
-    @GET("tag/suggestions")
-    Call<List<String>> getTagSuggestions(@Query("root") int idRoot, @Query("search") String search);
+    @GET("tag")
+    Call<List<Tag>> getTagSuggestions(@Query("root") int idRoot, @Query("hint") String search);
 }

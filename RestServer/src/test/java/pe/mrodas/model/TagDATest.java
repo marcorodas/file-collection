@@ -15,7 +15,7 @@ public class TagDATest extends BaseDATest {
                 new Tag().setName("conillo")
         );
         for (Tag tag : tags) {
-            TagDA.save(tag);
+            TagDA.save(idRoot, tag);
         }
         TagDA.select("coni").forEach(System.out::println);
         for (Tag tag : tags) {
@@ -26,8 +26,8 @@ public class TagDATest extends BaseDATest {
     @Test
     public void testSave() throws Exception {
         Tag tag = new Tag().setName("eribola");
-        TagDA.save(tag);
-        TagDA.save(tag.setName("ericota"));
+        TagDA.save(idRoot, tag);
+        TagDA.save(idRoot, tag.setName("ericota"));
         TagDA.select("eri").forEach(System.out::println);
         TagDA.delete(tag);
     }

@@ -1,37 +1,31 @@
 package pe.mrodas.controller;
 
-import javafx.beans.binding.Bindings;
-import javafx.beans.binding.DoubleBinding;
-import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.control.*;
-import javafx.scene.image.Image;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.SplitPane;
+import javafx.scene.control.ToolBar;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
-import org.controlsfx.control.GridCell;
+import lombok.Getter;
 import org.controlsfx.control.GridView;
-import org.controlsfx.control.SegmentedButton;
 import pe.mrodas.MainApp;
-import pe.mrodas.entity.Root;
 import pe.mrodas.entity.Tag;
-import pe.mrodas.helper.GuiHelper;
-import pe.mrodas.worker.TaskGetCategories;
+import pe.mrodas.model.RestClient;
+import pe.mrodas.model.TagModel;
 import pe.mrodas.worker.TaskGetFiles;
 import pe.mrodas.worker.TaskMoveFiles;
 
 import java.io.File;
-import java.security.InvalidParameterException;
+import java.io.FileFilter;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -62,52 +56,58 @@ public class CollectionStageController {
     @FXML
     private ProgressController progressController;
 
-    private final SimpleObjectProperty<Root> rootProperty = new SimpleObjectProperty<>();
-    private final SimpleObjectProperty<List<String>> extensionsProperty = new SimpleObjectProperty<>();
-    private final BaseController baseController = new CollectionController();
+    @Getter
+    private final SimpleObjectProperty<CollectionController.Config> configProperty = new SimpleObjectProperty<>();
+    private CollectionController parent;
     private final String path = "stage";
     private Service<List<Tag>> serviceGetCategories;
     private Service<List<File>> serviceGetFiles;
     private File selectedFile;
     private Tag selectedTag;
-
-    void setRoot(Root root) {
-        if (root == null) {
-            throw new InvalidParameterException("root can't be null");
-        }
-        if ((root.getIdRoot() == null ? 0 : root.getIdRoot()) <= 0) {
-            throw new InvalidParameterException("idRoot must be greater than zero");
-        }
-        rootProperty.set(root);
-    }
-
-    void setExtensions(List<String> extensions) {
-        extensionsProperty.set(extensions);
-    }
+    private Consumer<File> setImageView;
 
     public void initialize() {
-        rootProperty.addListener((o, old, root) -> this.onRootReady(root));
-        extensionsProperty.addListener((o, old, extensions) -> this.onExtensionsReady(extensions));
+        configProperty.addListener((o, old, config) -> {
+            parent = config.getParent();
+            config.buildTagButtons(tagButtons, tag -> {
+                btnUpload.setDisable(tag == null || gridUpload.getItems().isEmpty());
+                selectedTag = tag;
+            });
+            this.setServiceGetFiles(config.getExtensions());
+            this.setServiceGetCategories(config);
+            serviceGetFiles.start();
+            serviceGetCategories.start();
+        });
+        setImageView = file -> {
+            if (!file.equals(selectedFile)) {
+                if (CollectionController.setImageView(imageView, file, gridFiles.getHeight(), splitPane)) {
+                    toolbar.setDisable(false);
+                    selectedFile = file;
+                }
+            }
+        };
         gridUpload.setItems(FXCollections.observableArrayList());
         gridUpload.itemsProperty().get().addListener((ListChangeListener<? super File>) c -> {
             int size = c.getList().size();
             lblNumFilesUpload.setText(String.valueOf(size));
         });
-        gridUpload.setCellFactory(param -> new GridCellImage(this::setImageView, file -> {
+        gridUpload.setCellFactory(param -> new CollectionController.GridCellImage(setImageView, file -> {
             gridFiles.getItems().add(0, file);
             gridUpload.getItems().remove(file);
             if (gridUpload.getItems().isEmpty()) {
                 btnUpload.setDisable(true);
             }
         }));
-        System.out.println("Collection Stage!");
     }
 
-    private void onExtensionsReady(List<String> extensions) {
+    private void setServiceGetFiles(List<String> extensions) {
+        FileFilter filter = (extensions == null) ? null : file -> extensions.stream()
+                .map(s -> s.replace("*", ""))
+                .anyMatch(s -> file.getName().endsWith(s));
         serviceGetFiles = new Service<List<File>>() {
             @Override
             protected Task<List<File>> createTask() {
-                return new TaskGetFiles(MainApp.getSession().getWorkingDir(), path, extensions.stream());
+                return new TaskGetFiles(MainApp.getSession().getWorkingDir(), path, filter);
             }
         };
         serviceGetFiles.setOnSucceeded(event -> {
@@ -119,7 +119,7 @@ public class CollectionStageController {
                 int size = c.getList().size();
                 lblTotal.setText(String.valueOf(size));
             });
-            gridFiles.setCellFactory(param -> new GridCellImage(this::setImageView, file -> {
+            gridFiles.setCellFactory(param -> new CollectionController.GridCellImage(setImageView, file -> {
                 gridUpload.getItems().add(file);
                 gridFiles.getItems().remove(file);
                 if (selectedTag != null) {
@@ -127,103 +127,35 @@ public class CollectionStageController {
                 }
             }));
         });
-        serviceGetFiles.setOnFailed(baseController::onServiceFailed);
+        serviceGetFiles.setOnFailed(parent::onServiceFailed);
         splitPane.disableProperty().bind(serviceGetFiles.runningProperty());
-        progressController.setService(serviceGetFiles);
-        serviceGetFiles.start();
+        progressController.bindService(serviceGetFiles);
     }
 
-    private void setImageView(File file) {
-        if (!file.equals(selectedFile)) {
-            Image image = GuiHelper.getImageFromFile(file, null);
-            if (image != null) {
-                imageView.setImage(image);
-                imageView.fitWidthProperty().unbind();
-                double maxHeight = gridFiles.getHeight() - 10d;
-                DoubleBinding dividerWidth = this.getDividerWidth(image, maxHeight);
-                imageView.fitWidthProperty().bind(dividerWidth);
-                toolbar.setDisable(false);
-                selectedFile = file;
-            }
-        }
-    }
-
-    private DoubleBinding getDividerWidth(Image image, double maxHeight) {
-        DoubleBinding splitWidth = splitPane.widthProperty().subtract(10d);
-        DoubleProperty splitPercentage = splitPane.getDividers().get(0).positionProperty();
-        DoubleBinding dividerWidth = Bindings.subtract(1d, splitPercentage).multiply(splitWidth);
-        return Bindings.min(maxHeight * image.getWidth() / image.getHeight(), dividerWidth);
-    }
-
-    class GridCellImage extends GridCell<File> {
-        private final Consumer<File> onMouseSingleClick, onMouseDoubleClick;
-
-        GridCellImage(Consumer<File> onMouseSingleClick, Consumer<File> onMouseDoubleClick) {
-            this.onMouseSingleClick = onMouseSingleClick;
-            this.onMouseDoubleClick = onMouseDoubleClick;
-            this.setOnMouseClicked(this::onMouseClick);
-        }
-
-        void onMouseClick(MouseEvent e) {
-            int clickCount = e.getClickCount();
-            if (clickCount > 0) {
-                File item = this.getItem();
-                if (clickCount == 1) {
-                    onMouseSingleClick.accept(item);
-                } else if (onMouseDoubleClick != null) {
-                    onMouseDoubleClick.accept(item);
-                }
-            }
-        }
-
-        @Override
-        protected void updateItem(File file, boolean empty) {
-            super.updateItem(file, empty);
-            if (!empty && file != null) {
-                Image image = GuiHelper.getImageFromFile(file, 100);
-                if (image != null) {
-                    this.setGraphic(new ImageView(image));
-                }
-            }
-        }
-    }
-
-    private void onRootReady(Root root) {
+    private void setServiceGetCategories(CollectionController.Config config) {
         serviceGetCategories = new Service<List<Tag>>() {
             @Override
             protected Task<List<Tag>> createTask() {
-                return new TaskGetCategories(root.getIdRoot());
+                return new TaskGetCategories(config.getRoot().getIdRoot());
             }
         };
         serviceGetCategories.setOnSucceeded(event -> {
             List<Tag> tags = serviceGetCategories.getValue();
-            ToggleButton[] buttons = tags.stream().map(tag -> {
-                ToggleButton toggle = new ToggleButton(tag.getName());
-                toggle.setUserData(tag);
-                return toggle;
-            }).toArray(ToggleButton[]::new);
-            SegmentedButton groupBtns = new SegmentedButton(buttons);
-            tagButtons.getChildren().setAll(groupBtns);
-            groupBtns.getToggleGroup().selectedToggleProperty().addListener(this::onCategorySelectionChange);
+            config.getTagListProperty().set(tags);
         });
-        serviceGetCategories.setOnFailed(baseController::onServiceFailed);
+        serviceGetCategories.setOnFailed(parent::onServiceFailed);
         splitPane.disableProperty().bind(serviceGetCategories.runningProperty());
-        progressController.setService(serviceGetCategories);
-        serviceGetCategories.start();
+        progressController.bindService(serviceGetCategories);
     }
 
-    private void onCategorySelectionChange(ObservableValue<? extends Toggle> o, Toggle old, Toggle toggle) {
-        btnUpload.setDisable(toggle == null || gridUpload.getItems().isEmpty());
-        selectedTag = (toggle == null) ? null : (Tag) toggle.getUserData();
-    }
 
     @FXML
     public void btnGetFilesOnClick(ActionEvent actionEvent) {
-        FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("Images", extensionsProperty.get());
+        FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("Images", configProperty.get().getExtensions());
         FileChooser chooser = new FileChooser();
         chooser.getExtensionFilters().add(extFilter);
         chooser.setTitle("Import Images");
-        List<File> files = chooser.showOpenMultipleDialog(baseController.getStage(actionEvent));
+        List<File> files = chooser.showOpenMultipleDialog(parent.getStage(actionEvent));
         if (files != null && !files.isEmpty()) {
             Service<Void> service = new Service<Void>() {
                 @Override
@@ -232,10 +164,24 @@ public class CollectionStageController {
                 }
             };
             service.setOnSucceeded(event -> serviceGetFiles.restart());
-            service.setOnFailed(baseController::onServiceFailed);
+            service.setOnFailed(parent::onServiceFailed);
             splitPane.disableProperty().bind(service.runningProperty());
-            progressController.setService(service);
+            progressController.bindService(service);
             service.restart();
+        }
+    }
+
+    public static class TaskGetCategories extends Task<List<Tag>> {
+        private final int idRoot;
+
+        public TaskGetCategories(int idRoot) {
+            this.idRoot = idRoot;
+        }
+
+        @Override
+        protected List<Tag> call() throws Exception {
+            super.updateMessage("Getting categories...");
+            return RestClient.execute(TagModel.class, model -> model.getCategories(idRoot));
         }
     }
 
@@ -254,5 +200,6 @@ public class CollectionStageController {
     @FXML
     public void btnGetFromUrlOnClick(ActionEvent event) {
     }
+
 
 }

@@ -3,29 +3,22 @@ package pe.mrodas.worker;
 import javafx.concurrent.Task;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class TaskGetFiles extends Task<List<File>> {
 
     private final String workingDir, relativePath;
-    private List<String> extensions;
+    private final FileFilter filter;
 
-    public TaskGetFiles(String workingDir, String relativePath) {
+    public TaskGetFiles(String workingDir, String relativePath, FileFilter filter) {
         this.workingDir = workingDir;
         this.relativePath = relativePath;
-    }
-
-    public TaskGetFiles(String workingDir, String relativePath, Stream<String> extensions) {
-        this(workingDir, relativePath);
-        this.extensions = extensions
-                .map(s -> s.replace("*", ""))
-                .collect(Collectors.toList());
+        this.filter = filter;
     }
 
     @Override
@@ -44,12 +37,7 @@ public class TaskGetFiles extends Task<List<File>> {
         if (!file.isDirectory()) {
             throw new IOException("Invalid directory:\n" + file.getAbsolutePath());
         }
-        File[] files = file.listFiles(extensions == null ? null : this::filter);
+        File[] files = file.listFiles(filter);
         return files == null ? new ArrayList<>() : Arrays.asList(files);
     }
-
-    private boolean filter(File file) {
-        return extensions.stream().anyMatch(s -> file.getName().endsWith(s));
-    }
-
 }
