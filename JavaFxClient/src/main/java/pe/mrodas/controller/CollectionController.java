@@ -13,19 +13,24 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.security.InvalidParameterException;
+import java.util.List;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+
 import lombok.Data;
 import lombok.Getter;
 import org.controlsfx.control.GridCell;
 import org.controlsfx.control.SegmentedButton;
+
+import pe.mrodas.MainApp;
 import pe.mrodas.entity.Root;
 import pe.mrodas.entity.Tag;
 import pe.mrodas.helper.GuiHelper;
-
-import java.io.File;
-import java.io.IOException;
-import java.security.InvalidParameterException;
-import java.util.List;
-import java.util.function.Consumer;
 
 public class CollectionController extends BaseController {
 
@@ -36,6 +41,7 @@ public class CollectionController extends BaseController {
 
     @Getter
     private final SimpleObjectProperty<Config> configProperty = new SimpleObjectProperty<>();
+    private Path rootDir;
 
     public CollectionController() {
         super("/fxml/Collection.fxml");
@@ -50,9 +56,18 @@ public class CollectionController extends BaseController {
         }
         super.<CollectionController>setOnControllerReady(ctrl -> {
             Config config = new Config(ctrl, root, extensions);
+            ctrl.setRootDir(root);
             ctrl.getConfigProperty().set(config);
         });
         return super.prepareStage(node);
+    }
+
+    private void setRootDir(Root root) {
+        rootDir = Paths.get(MainApp.getSession().getWorkingDir(), root.getName());
+    }
+
+    Path getPath(String folder) {
+        return rootDir.resolve(folder);
     }
 
     @Override
@@ -107,9 +122,10 @@ public class CollectionController extends BaseController {
     }
 
     static class GridCellImage extends GridCell<File> {
-        private final Consumer<File> onMouseSingleClick, onMouseDoubleClick;
+        private final Consumer<File> onMouseSingleClick;
+        private final BiConsumer<File, MouseEvent> onMouseDoubleClick;
 
-        GridCellImage(Consumer<File> onMouseSingleClick, Consumer<File> onMouseDoubleClick) {
+        GridCellImage(Consumer<File> onMouseSingleClick, BiConsumer<File, MouseEvent> onMouseDoubleClick) {
             this.onMouseSingleClick = onMouseSingleClick;
             this.onMouseDoubleClick = onMouseDoubleClick;
             this.setOnMouseClicked(this::onMouseClick);
@@ -122,7 +138,7 @@ public class CollectionController extends BaseController {
                 if (clickCount == 1) {
                     onMouseSingleClick.accept(item);
                 } else if (onMouseDoubleClick != null) {
-                    onMouseDoubleClick.accept(item);
+                    onMouseDoubleClick.accept(item, e);
                 }
             }
         }

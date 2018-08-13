@@ -1,15 +1,14 @@
 package pe.mrodas.model;
 
+import java.util.Arrays;
+import java.util.List;
+
 import lombok.experimental.UtilityClass;
+
 import pe.mrodas.entity.Tag;
 import pe.mrodas.helper.SqlInOperator;
 import pe.mrodas.jdbc.SqlInsert;
 import pe.mrodas.jdbc.SqlQuery;
-import pe.mrodas.jdbc.SqlUpdate;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.DoubleStream;
 
 @UtilityClass
 public class TagDA {
@@ -51,7 +50,7 @@ public class TagDA {
     }
 
     public void delete(Integer[] ids) throws Exception {
-        SqlInOperator inIdTags = new SqlInOperator(Arrays.asList(ids));
+        SqlInOperator<Integer> inIdTags = new SqlInOperator<>(Arrays.asList(ids));
         SqlQuery<?> query = new SqlQuery<>().setSql("DELETE FROM tag WHERE idTag IN " + inIdTags);
         inIdTags.getParameters().forEach(query::addParameter);
         query.execute();

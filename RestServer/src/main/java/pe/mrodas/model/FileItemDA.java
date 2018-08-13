@@ -1,89 +1,95 @@
 package pe.mrodas.model;
 
+import java.io.InputStream;
+import java.util.List;
+
 import lombok.experimental.UtilityClass;
+
 import pe.mrodas.entity.FileItem;
 import pe.mrodas.entity.Tag;
 import pe.mrodas.helper.SqlInOperator;
+import pe.mrodas.jdbc.Adapter;
 import pe.mrodas.jdbc.SqlInsert;
 import pe.mrodas.jdbc.SqlQuery;
-
-import java.sql.Connection;
-import java.util.ArrayList;
-import java.util.List;
 
 @UtilityClass
 public class FileItemDA {
 
-    public List<FileItem> retrieveContent(List<Integer> idFiles) throws Exception {
-        if (!idFiles.isEmpty()) {
-            SqlInOperator inIdFiles = new SqlInOperator(idFiles);
-            SqlQuery<FileItem> query = new SqlQuery<>(FileItem.class).setSql(new String[]{
-                    "SELECT idFile, md5, creation, content",
-                    "   FROM file_item",
-                    "   WHERE idFile IN " + inIdFiles
-            }).setMapper((mapper, result, rs) -> {
-                mapper.map(result::setIdFile, rs::getInt);
-                mapper.map(result::setMd5, rs::getString);
-                mapper.map(result::setCreation, rs::getDate);
-                mapper.map(result::setContent, rs::getBytes);
-            });
-            inIdFiles.getParameters().forEach(query::addParameter);
-            return query.executeList();
+    public List<FileItem> select(int idRoot, List<String> md5List) throws Exception {
+        SqlInOperator<String> inOperator = md5List.isEmpty()
+                ? null : new SqlInOperator<>(md5List);
+        SqlQuery<FileItem> query = new SqlQuery<>(FileItem.class).setSql(new String[]{
+                "SELECT DISTINCT F.idFile, F.md5, F.extension",
+                "   FROM file_item F",
+                "   INNER JOIN file_x_tag FT",
+                "       ON F.idFile = FT.idFile",
+                "   INNER JOIN tag T",
+                "       ON T.idTag = FT.idTag",
+                "   WHERE T.idRoot = :idRoot",
+                "       AND F.expiration IS NULL",
+                inOperator == null ? "" : ("AND F.md5 NOT IN " + inOperator)
+        });
+        query.setMapper((mapper, item, rs) -> {
+            mapper.map(item::setIdFile, rs::getInt);
+            mapper.map(item::setMd5, rs::getString);
+            mapper.map(item::setExtension, rs::getString);
+        }).addParameter("idRoot", idRoot);
+        if (inOperator != null) {
+            inOperator.getParameters().forEach(query::addParameter);
         }
-        return new ArrayList<>();
+        return query.executeList();
     }
 
-    public FileItem select(Connection connection, Integer idFile) throws Exception {
-        List<Tag> tags = FileTagDA.select(connection, idFile);
-        return new SqlQuery<>(FileItem.class, connection, false).setSql(new String[]{
-                "SELECT idFile, md5",
-                "   FROM file_item",
-                "   WHERE idFile = :idFile"
-        }).setMapper((mapper, result, rs) -> {
-            mapper.map(result::setIdFile, rs::getInt);
-            mapper.map(result::setMd5, rs::getString);
-        }).addParameter("idFile", idFile).executeFirst().setTags(tags);
+    public FileItem select(Integer idFile) throws Exception {
+        return new SqlQuery<>(FileItem.class).setSql(new String[]{
+                "SELECT F.idFile, F.md5, F.extension, FC.content",
+                "   FROM file_content FC",
+                "   INNER JOIN file_item F",
+                "       ON FC.idFile = F.idFile",
+                "   WHERE FC.idFile = :idFile",
+                "       AND F.expiration IS NULL"
+        }).setMapper((mapper, item, rs) -> {
+            mapper.map(item::setIdFile, rs::getInt);
+            mapper.map(item::setMd5, rs::getString);
+            mapper.map(item::setExtension, rs::getString);
+            mapper.map(item::setContent, rs::getBytes);
+        }).addParameter("idFile", idFile).executeFirst();
     }
 
-    public List<FileItem> select(List<Tag> tags) throws Exception {
+    public List<FileItem> select(List<Integer> tagsId) throws Exception {
         SqlQuery<FileItem> query = new SqlQuery<>(FileItem.class);
-        if (tags.isEmpty()) {
-            query.setSql("SELECT idFile, md5 FROM file ORDER BY creation DESC");
-        } else {
-            SqlInOperator inIdTags = new SqlInOperator(tags.stream().map(Tag::getIdTag));
-            query.setSql(new String[]{
-                    "SELECT F.idFile, F.md5",
-                    "   FROM file_item F",
-                    "   INNER JOIN file_x_tag FxT",
-                    "       ON FxT.idFile = F.idFile",
-                    "   WHERE FxT.idTag IN " + inIdTags,
-                    "   ORDER BY F.creation DESC"
-            });
-            inIdTags.getParameters().forEach(query::addParameter);
-        }
+        SqlInOperator<Integer> inIdTags = new SqlInOperator<>(tagsId);
+        query.setSql(new String[]{
+                "SELECT DISTINCT F.idFile, F.md5, F.extension",
+                "   FROM file_item F",
+                "   INNER JOIN file_x_tag FxT",
+                "       ON FxT.idFile = F.idFile",
+                "   WHERE FxT.idTag IN " + inIdTags,
+                "       AND F.expiration IS NULL"
+        });
+        inIdTags.getParameters().forEach(query::addParameter);
         return query.setMapper((mapper, result, rs) -> {
             mapper.map(result::setIdFile, rs::getInt);
             mapper.map(result::setMd5, rs::getString);
+            mapper.map(result::setExtension, rs::getString);
         }).executeList();
     }
 
-    private void insert(Connection connection, FileItem item) throws Exception {
-        new SqlInsert("file", item::setIdFile)
-                .addField("md5", item.getMd5())
-                .addField("creation", item.getCreation())
-                .addField("content", item.getContent())
-                .execute(connection);
-        for (Tag tag : item.getTags()) {
-            FileTagDA.insert(connection, item.getIdFile(), tag.getIdTag());
-        }
-    }
-
-    private void save(Connection connection, FileItem item) throws Exception {
-        if (item.getIdFile() == null) {
-            insert(connection, item);
-        } else {
-            FileTagDA.update(connection, item.getIdFile(), item.getTags());
-        }
+    public static int insert(FileItem item, InputStream inputStream) throws Exception {
+        return Adapter.batch(connection -> {
+            new SqlInsert("file_item", item::setIdFile)
+                    .addField("md5", item.getMd5())
+                    .addField("extension", item.getExtension())
+                    .execute(connection);
+            for (Tag tag : item.getTags()) {
+                FileTagDA.insert(connection, item.getIdFile(), tag.getIdTag());
+            }
+            new SqlInsert("file_content")
+                    .addField("idFile", item.getIdFile())
+                    .addField("content", inputStream)
+                    .execute(connection);
+            return item.getIdFile();
+        });
     }
 
 }

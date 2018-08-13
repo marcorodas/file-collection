@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import de.jensd.fx.glyphs.materialdesignicons.MaterialDesignIconView?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
@@ -11,8 +10,8 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
+<?import de.jensd.fx.glyphs.materialdesignicons.MaterialDesignIconView?>
 <?import org.controlsfx.control.GridView?>
-
 <BorderPane minWidth="925.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="pe.mrodas.controller.CollectionStageController">
     <bottom>
         <fx:include fx:id="progress" source="ProgressPane.fxml" />
@@ -27,17 +26,17 @@
                                 <MaterialDesignIconView glyphName="IMPORT" size="16" strokeType="OUTSIDE" strokeWidth="0.0" />
                             </graphic>
                         </Button>
-                  <Button layoutX="10.0" layoutY="10.0" mnemonicParsing="false" onAction="#btnGetFromUrlOnClick" text="Get From Url">
-                     <graphic>
-                        <MaterialDesignIconView glyphName="WEB" size="16" strokeType="OUTSIDE" strokeWidth="0.0" />
-                     </graphic>
-                  </Button>
+                        <Button layoutX="10.0" layoutY="10.0" mnemonicParsing="false" onAction="#btnGetFromUrlOnClick" text="Get From Url">
+                            <graphic>
+                                <MaterialDesignIconView glyphName="WEB" size="16" strokeType="OUTSIDE" strokeWidth="0.0" />
+                            </graphic>
+                        </Button>
                         <Label text="Total:">
                             <font>
                                 <Font name="System Bold" size="12.0" />
                             </font>
                         </Label>
-                        <Label fx:id="lblTotal" text="{total}">
+                        <Label fx:id="lblTotal" text="0">
                             <font>
                                 <Font name="System Bold" size="12.0" />
                             </font>
@@ -70,7 +69,7 @@
         </SplitPane>
     </top>
     <center>
-        <VBox spacing="5.0" style="-fx-border-style: solid none none none; -fx-border-color: #cfcfcf;" BorderPane.alignment="CENTER">
+        <VBox fx:id="uploadContainer" spacing="5.0" style="-fx-border-style: solid none none none; -fx-border-color: #cfcfcf;" BorderPane.alignment="CENTER">
             <BorderPane.margin>
                 <Insets />
             </BorderPane.margin>
@@ -78,22 +77,21 @@
                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
             </padding>
             <HBox spacing="5.0">
-                <children>
-                    <Label text="Files to Upload:">
-                        <font>
-                            <Font name="System Bold" size="12.0" />
-                        </font>
-                    </Label>
-                    <Label fx:id="lblNumFilesUpload" text="0">
-                        <font>
-                            <Font name="System Bold" size="12.0" />
-                        </font>
-                    </Label>
-                </children>
+                <Label text="Files to Upload:">
+                    <font>
+                        <Font name="System Bold" size="12.0"/>
+                    </font>
+                </Label>
+                <Label fx:id="lblNumFilesUpload" text="0">
+                    <font>
+                        <Font name="System Bold" size="12.0"/>
+                    </font>
+                </Label>
+                <Label text="(Double click an image to move between panels)"/>
             </HBox>
             <GridView fx:id="gridUpload" cellHeight="100.0" cellWidth="100.0" horizontalCellSpacing="5.0" prefHeight="115.0" style="-fx-border-color: #cfcfcf;" verticalCellSpacing="5.0" />
             <HBox alignment="CENTER_LEFT" spacing="5.0">
-                  <Label alignment="CENTER" text="Category:" />
+                <Label alignment="CENTER" text="Category:" />
                 <HBox fx:id="tagButtons" />
                 <Button fx:id="btnUpload" disable="true" mnemonicParsing="false" onAction="#btnUploadOnClick" text="Upload">
                     <graphic>

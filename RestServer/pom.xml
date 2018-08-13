@@ -57,13 +57,19 @@
         <dependency>
             <groupId>org.glassfish.jersey.containers</groupId>
             <artifactId>jersey-container-servlet</artifactId>
-            <version>2.24</version>
+            <version>2.25.1</version>
         </dependency>
         <!-- MessageBodyWriter -->
         <dependency>
             <groupId>org.glassfish.jersey.media</groupId>
             <artifactId>jersey-media-json-jackson</artifactId>
             <version>2.26</version>
+        </dependency>
+        <!-- FormDataParam Upload File -->
+        <dependency>
+            <groupId>org.glassfish.jersey.media</groupId>
+            <artifactId>jersey-media-multipart</artifactId>
+            <version>2.21</version>
         </dependency>
         <!-- ServletContextListener -->
         <dependency>
@@ -95,7 +101,7 @@
         <dependency>
             <groupId>com.github.marcorodas</groupId>
             <artifactId>simple-jdbc</artifactId>
-            <version>955493d</version>
+            <version>a5de8a7397</version>
         </dependency>
         <!-- JDBC Driver for MySQL -->
         <dependency>

@@ -1,6 +1,5 @@
 package pe.mrodas.controller;
 
-import com.jfoenix.controls.JFXTextField;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
@@ -9,32 +8,41 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+import com.jfoenix.controls.JFXTextField;
+
 import pe.mrodas.MainApp;
 import pe.mrodas.entity.Config;
 import pe.mrodas.entity.Environment;
 import pe.mrodas.model.ConfigModel;
 import pe.mrodas.model.RestClient;
 
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-
 public class WorkspaceController extends BaseController {
 
-    class TaskSaveConfig extends Task<Void> {
+    class ServiceSaveConfig extends Service<Void> {
+
         private final boolean isNew;
         private final Config config;
 
-        public TaskSaveConfig(boolean isNew, Config config) {
+        ServiceSaveConfig(boolean isNew, Config config) {
             this.isNew = isNew;
             this.config = config;
         }
 
         @Override
-        protected Void call() throws Exception {
-            super.updateMessage("Saving config...");
-            return RestClient.execute(ConfigModel.class, model -> isNew ? model.insert(config) : model.update(config));
+        protected Task<Void> createTask() {
+            return new Task<Void>() {
+                @Override
+                protected Void call() throws Exception {
+                    super.updateMessage("Saving config...");
+                    return RestClient.execute(ConfigModel.class, model ->
+                            isNew ? model.insert(config) : model.update(config)).body();
+                }
+            };
         }
     }
 
@@ -46,15 +54,10 @@ public class WorkspaceController extends BaseController {
     private ProgressController progressController;
 
     private final Config config = new Config().setEnvironment(Environment.get());
-    private final Service<Void> serviceSaveConfig = new Service<Void>() {
-        @Override
-        protected Task<Void> createTask() {
-            return new TaskSaveConfig(true, config);
-        }
-    };
+    private final Service<Void> serviceSaveConfig = new ServiceSaveConfig(true, config);
 
 
-    public WorkspaceController() {
+    WorkspaceController() {
         super("/fxml/Workspace.fxml");
         this.setTitle("Workspace Selection");
     }
@@ -63,7 +66,7 @@ public class WorkspaceController extends BaseController {
     public void initialize() {
         content.disableProperty().bind(serviceSaveConfig.runningProperty());
         progressController.bindService(serviceSaveConfig);
-        serviceSaveConfig.setOnSucceeded(super::onServiceFailed);
+        serviceSaveConfig.setOnFailed(super::onServiceFailed);
     }
 
     WorkspaceController setOnSaveSuccess(Runnable runOnOkClick) {

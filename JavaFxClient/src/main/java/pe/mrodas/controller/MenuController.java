@@ -9,12 +9,12 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.StackPane;
-import pe.mrodas.MainApp;
-import pe.mrodas.entity.Root;
-
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import pe.mrodas.MainApp;
+import pe.mrodas.entity.Root;
 
 
 public class MenuController extends BaseController {

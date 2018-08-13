@@ -17,7 +17,6 @@ import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class FileHelper {
-
     public String getMD5(Path path) throws NoSuchAlgorithmException, IOException {
         byte[] byteArray = Files.readAllBytes(path);
         byte[] digest = MessageDigest.getInstance("MD5").digest(byteArray);
@@ -67,4 +66,5 @@ public class FileHelper {
         }
         return prop;
     }
+
 }

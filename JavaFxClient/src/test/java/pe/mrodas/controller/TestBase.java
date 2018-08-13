@@ -3,14 +3,14 @@ package pe.mrodas.controller;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
 import javafx.stage.Stage;
+import java.util.concurrent.TimeUnit;
+
 import org.junit.After;
 import org.junit.Test;
 import org.testfx.api.FxToolkit;
 import org.testfx.framework.junit.ApplicationTest;
-import pe.mrodas.MainApp;
 
-import java.nio.file.Paths;
-import java.util.concurrent.TimeUnit;
+import pe.mrodas.MainApp;
 
 /**
  * @author skynet
@@ -39,7 +39,7 @@ public abstract class TestBase extends ApplicationTest {
     }
 
     @Test
-    public void testShow() throws Exception {
+    public void testShow() {
         sleep(duration == 0 ? 30 : duration, TimeUnit.SECONDS);
     }
 
@@ -48,7 +48,7 @@ public abstract class TestBase extends ApplicationTest {
         if (!sessionUnset) {
             String workingDir = "C:\\Users\\skynet\\Desktop\\FilesCollectionTest";
             MainApp.getSession()
-                    .setWorkingDir(Paths.get(workingDir));
+                    .setWorkingDir(workingDir);
         }
         this.startTest(stage);
     }

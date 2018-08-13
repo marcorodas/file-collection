@@ -1,18 +1,18 @@
 package pe.mrodas.entity;
 
-import lombok.Data;
-import lombok.experimental.Accessors;
-
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+
+import lombok.Data;
+import lombok.experimental.Accessors;
 
 @Accessors(chain = true)
 @Data
 public class FileItem {
     private Integer idFile;
-    private String name, md5;
-    private Date creation;
+    private String md5, extension;
+    private Date expiration;
     private byte[] content;
     private List<Tag> tags = new ArrayList<>();
 }

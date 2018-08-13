@@ -10,15 +10,13 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.Dialog;
+import javafx.scene.control.TextInputDialog;
 import javafx.scene.image.Image;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import org.w3c.dom.Document;
-import org.xml.sax.SAXException;
-import pe.mrodas.helper.ExceptionAlert;
-
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
@@ -31,6 +29,11 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import org.w3c.dom.Document;
+import org.xml.sax.SAXException;
+
+import pe.mrodas.helper.ExceptionAlert;
 
 public abstract class BaseController {
 
@@ -207,7 +210,7 @@ public abstract class BaseController {
         }
     }
 
-    private Alert setAlertIcons(Alert alert) {
+    private <T> Dialog<T> setAlertIcons(Dialog<T> alert) {
         this.setAppIcons((Stage) alert.getDialogPane().getScene().getWindow());
         return alert;
     }
@@ -217,6 +220,13 @@ public abstract class BaseController {
         Alert alert = new Alert(type, txt);
         alert.setHeaderText(null);
         return this.setAlertIcons(alert).showAndWait();
+    }
+
+    Optional<String> dialogInputText(Consumer<TextInputDialog> config) {
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setHeaderText(null);
+        config.accept(dialog);
+        return this.setAlertIcons(dialog).showAndWait();
     }
 
     void dialogInfo(String... msjs) {
