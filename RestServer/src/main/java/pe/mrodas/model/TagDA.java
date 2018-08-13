@@ -23,7 +23,8 @@ public class TagDA {
                 "    INNER JOIN user_x_root UR",
                 "        ON UR.idRoot = T.idRoot",
                 "    WHERE T.idRoot = :idRoot",
-                "        AND UR.idUser = :idUser"
+                "        AND UR.idUser = :idUser",
+                "    ORDER BY C.order"
         }).setMapper((mapper, tag, rs) -> {
             mapper.map(tag::setIdTag, rs::getInt);
             mapper.map(tag::setName, rs::getString);

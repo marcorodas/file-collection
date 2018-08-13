@@ -123,7 +123,7 @@ public class CollectionImportedController {
 
     private void onImageSingleClick(File file) {
         if (!file.equals(selectedFile)) {
-            if (CollectionController.setImageView(imageView, file, gridFiles.getHeight(), splitPane)) {
+            if (CollectionController.setImageView(imageView, file, gridFiles.getHeight() - toolbar.getHeight(), splitPane)) {
                 toolbar.setDisable(false);
                 selectedFile = file;
             }

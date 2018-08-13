@@ -119,6 +119,7 @@ file_x_tag }-- tag
 TABLE(category){
     FK(idTag) INTEGER NOT_NULL()
     FK(idRoot) TINYINT NOT_NULL()
+    order TINYINT
 }
 
 category }-- tag
