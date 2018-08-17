@@ -23,11 +23,13 @@
           <graphic>
               <MaterialDesignIconView glyphName="PENCIL" size="16" strokeType="OUTSIDE" strokeWidth="0.0" />
           </graphic>
+          <fx:include fx:id="collectionEdit" source="CollectionEdit.fxml" />
       </Tab>
       <Tab text="Trash">
           <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0" />
           <graphic>
               <MaterialDesignIconView glyphName="DELETE" size="16" strokeType="OUTSIDE" strokeWidth="0.0" />
           </graphic>
+          <fx:include fx:id="collectionTrash" source="CollectionTrash.fxml" />
       </Tab>
   </TabPane>

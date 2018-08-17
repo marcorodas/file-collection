@@ -40,7 +40,7 @@ public class FileItemDA {
         return query.executeList();
     }
 
-    public FileItem select(Integer idFile) throws Exception {
+    public FileItem select(int idFile) throws Exception {
         return new SqlQuery<>(FileItem.class).setSql(new String[]{
                 "SELECT F.idFile, F.md5, F.extension, FC.content",
                 "   FROM file_content FC",
@@ -60,12 +60,14 @@ public class FileItemDA {
         SqlQuery<FileItem> query = new SqlQuery<>(FileItem.class);
         SqlInOperator<Integer> inIdTags = new SqlInOperator<>(tagsId);
         query.setSql(new String[]{
-                "SELECT DISTINCT F.idFile, F.md5, F.extension",
+                "SELECT F.idFile, F.md5, F.extension",
                 "   FROM file_item F",
                 "   INNER JOIN file_x_tag FxT",
                 "       ON FxT.idFile = F.idFile",
                 "   WHERE FxT.idTag IN " + inIdTags,
-                "       AND F.expiration IS NULL"
+                "       AND F.expiration IS NULL",
+                "   GROUP BY F.idFile",
+                "   HAVING COUNT(*) > ", String.valueOf(inIdTags.getParameters().size() - 1)
         });
         inIdTags.getParameters().forEach(query::addParameter);
         return query.setMapper((mapper, result, rs) -> {
@@ -73,6 +75,23 @@ public class FileItemDA {
             mapper.map(result::setMd5, rs::getString);
             mapper.map(result::setExtension, rs::getString);
         }).executeList();
+    }
+
+    public List<FileItem> selectUntagged(int idCategory) throws Exception {
+        return new SqlQuery<>(FileItem.class).setSql(new String[]{
+                "SELECT F.idFile, F.md5, F.extension, FxT.idTag",
+                "   FROM file_item F",
+                "   INNER JOIN file_x_tag FxT",
+                "       ON FxT.idFile = F.idFile",
+                "   GROUP BY F.idFile",
+                "   HAVING COUNT(*) = 1",
+                "       AND FxT.idTag = :idCategory"
+        }).setMapper((mapper, result, rs) -> {
+            mapper.map(result::setIdFile, rs::getInt);
+            mapper.map(result::setMd5, rs::getString);
+            mapper.map(result::setExtension, rs::getString);
+        }).addParameter("idCategory", idCategory)
+                .executeList();
     }
 
     public static int insert(FileItem item, InputStream inputStream) throws Exception {

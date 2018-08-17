@@ -53,11 +53,12 @@ public class ServiceUploadFiles extends ServiceFiles<Void> {
                 HashMap<String, String> map = new HashMap<>();
                 map.put("idTag", String.valueOf(idTag));
                 Map<String, RequestBody> bodyMap = RestClient.createBodyPart(map);
-                int size = filesToUpload.size();
-                for (int i = 0; i < size; i++) {
+                int total = filesToUpload.size();
+                for (int i = 0; i < total; i++) {
+                    this.updateProgress(i, total);
                     File file = filesToUpload.get(i);
                     Path targetFile = ServiceUploadFiles.this.resolve(file.getName());
-                    String progress = String.format("[%d/%d] ", i + 1, size);
+                    String progress = String.format("[%d/%d] ", i + 1, total);
                     this.updateMessage(progress + "Preparing...");
                     MultipartBody.Part bodyFile = RestClient.createBodyPart("file", file);
                     this.updateMessage(progress + "Uploading...");
@@ -73,7 +74,7 @@ public class ServiceUploadFiles extends ServiceFiles<Void> {
                         Files.move(file.toPath(), targetFile);
                     }
                     uploadedFileNames.add(file.getName());
-                    this.updateProgress(i, size);
+                    this.updateProgress(i + 1, total);
                 }
                 return null;
             }

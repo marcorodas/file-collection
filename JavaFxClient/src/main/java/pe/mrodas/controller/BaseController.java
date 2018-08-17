@@ -11,7 +11,6 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Dialog;
-import javafx.scene.control.TextInputDialog;
 import javafx.scene.image.Image;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
@@ -210,23 +209,16 @@ public abstract class BaseController {
         }
     }
 
-    private <T> Dialog<T> setAlertIcons(Dialog<T> alert) {
-        this.setAppIcons((Stage) alert.getDialogPane().getScene().getWindow());
-        return alert;
+    public <T> Dialog<T> dialogCustom(Dialog<T> dialog) {
+        this.setAppIcons((Stage) dialog.getDialogPane().getScene().getWindow());
+        return dialog;
     }
 
     private Optional<ButtonType> dialog(Alert.AlertType type, String... msjs) {
         String txt = Stream.of(msjs).collect(Collectors.joining("\n"));
         Alert alert = new Alert(type, txt);
         alert.setHeaderText(null);
-        return this.setAlertIcons(alert).showAndWait();
-    }
-
-    Optional<String> dialogInputText(Consumer<TextInputDialog> config) {
-        TextInputDialog dialog = new TextInputDialog();
-        dialog.setHeaderText(null);
-        config.accept(dialog);
-        return this.setAlertIcons(dialog).showAndWait();
+        return this.dialogCustom(alert).showAndWait();
     }
 
     void dialogInfo(String... msjs) {
@@ -263,7 +255,7 @@ public abstract class BaseController {
                 ? new ExceptionAlert(e, debugMode)
                 : alertExceptionHandler.apply(e, debugMode);
         alert.setHeaderText(null);
-        this.setAlertIcons(alert).showAndWait();
+        this.dialogCustom(alert).showAndWait();
     }
 
     private Stage getStage(Node node) {

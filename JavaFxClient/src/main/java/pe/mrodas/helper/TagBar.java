@@ -1,31 +1,27 @@
 package pe.mrodas.helper;
 
-import com.jfoenix.controls.JFXAutoCompletePopup;
-import com.jfoenix.controls.JFXSpinner;
-import de.jensd.fx.glyphs.materialdesignicons.MaterialDesignIcon;
-import de.jensd.fx.glyphs.materialdesignicons.MaterialDesignIconView;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
-import javafx.concurrent.Service;
-import javafx.concurrent.Task;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
-import javafx.scene.control.ListCell;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.text.Text;
-import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import de.jensd.fx.glyphs.materialdesignicons.MaterialDesignIcon;
+import de.jensd.fx.glyphs.materialdesignicons.MaterialDesignIconView;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * https://stackoverflow.com/questions/37378973/implement-tags-bar-in-javafx
@@ -33,33 +29,30 @@ import java.util.stream.Collectors;
  */
 public class TagBar<T> extends HBox {
     private final Function<T, String> toString;
-    private final JFXAutoCompletePopup<T> autoCompletePopup = new JFXAutoCompletePopup<>();
     @Getter
     private final ObservableList<T> tags = FXCollections.observableArrayList();
     @Getter
     private final TextField inputTextField = new TextField();
+    private final InputAutoComplete<T> inputAutoComplete;
     @Setter
-    private Runnable onSuggestionIsSelected;
+    private Runnable onTagsUpdated;
 
-    private TagBar(Function<T, String> toString) {
+    public TagBar(Function<T, String> toString) {
         this.toString = toString;
         getStyleClass().setAll("tag-bar");
         getStylesheets().add("styles/TagBar.css");
         tags.addListener(this::onChanged);
-        autoCompletePopup.setSuggestionsCellFactory(param -> new ListCell<T>() {
-            @Override
-            protected void updateItem(T item, boolean empty) {
-                super.updateItem(item, empty);
-                if (!empty && item != null) {
-                    this.setGraphic(new Text(toString.apply(item)));
-                }
+        inputAutoComplete = new InputAutoComplete<>(inputTextField, toString);
+        inputTextField.focusedProperty().addListener((observable, oldValue, newValue) -> {
+            if (Boolean.FALSE.equals(newValue)) {
+                inputTextField.clear();
             }
         });
-        autoCompletePopup.setSelectionHandler(e -> {
+        inputAutoComplete.setSelectionHandler(e -> {
             tags.add(e.getObject());
             inputTextField.clear();
-            if (onSuggestionIsSelected != null) {
-                onSuggestionIsSelected.run();
+            if (onTagsUpdated != null) {
+                onTagsUpdated.run();
             }
         });
         inputTextField.setPromptText("Search by tag...");
@@ -70,95 +63,20 @@ public class TagBar<T> extends HBox {
                 inputTextField.clear();
             }
         });
-        inputTextField.focusedProperty().addListener((observable, oldValue, newValue) -> {
-            if (Boolean.FALSE.equals(newValue)) {
-                inputTextField.clear();
-            }
-        });
         inputTextField.prefHeightProperty().bind(this.heightProperty());
         HBox.setHgrow(inputTextField, Priority.ALWAYS);
         inputTextField.setBackground(null);
         getChildren().add(inputTextField);
     }
 
-    public TagBar(Function<T, String> toString, List<T> suggestionList) {
-        this(toString);
-        autoCompletePopup.getSuggestions().setAll(suggestionList);
-        inputTextField.textProperty().addListener((observable, oldHint, newHint) -> {
-            if (newHint != null && !newHint.trim().isEmpty()) {
-                if (oldHint == null || !newHint.trim().toLowerCase().equals(oldHint.trim().toLowerCase())) {
-                    autoCompletePopup.filter(t -> toString.apply(t).equals(newHint));
-                    if (autoCompletePopup.getFilteredSuggestions().isEmpty()) {
-                        autoCompletePopup.hide();
-                    } else {
-                        autoCompletePopup.show(inputTextField);
-                    }
-                }
-            }
-        });
+    public TagBar<T> setSuggestionList(List<T> suggestionList) {
+        inputAutoComplete.setSuggestionList(suggestionList);
+        return this;
     }
 
-    public interface SugestionProvider<T> {
-        List<T> apply(String hint) throws Exception;
-    }
-
-    @Data
-    private class SuggestionService extends Service<List<T>> {
-        private final SugestionProvider<T> suggestionProvider;
-        @Setter
-        private String hint;
-
-        @Override
-        protected Task<List<T>> createTask() {
-            return new Task<List<T>>() {
-                @Override
-                protected List<T> call() throws Exception {
-                    return suggestionProvider.apply(hint);
-                }
-            };
-        }
-    }
-
-    public TagBar(Function<T, String> toString, SugestionProvider<T> suggestionProvider) {
-        this(toString);
-        JFXSpinner spinner = new JFXSpinner();
-        MaterialDesignIconView iconView = new MaterialDesignIconView(MaterialDesignIcon.WIFI_OFF);
-        iconView.setSize("20");
-        SuggestionService service = new SuggestionService(suggestionProvider);
-        service.setOnSucceeded(event -> {
-            getChildren().remove(iconView);
-            getChildren().remove(spinner);
-            List<T> suggestions = service.getValue().stream()
-                    .filter(t -> !tags.contains(t))
-                    .collect(Collectors.toList());
-            autoCompletePopup.getSuggestions().setAll(suggestions);
-            if (suggestions.isEmpty()) {
-                autoCompletePopup.hide();
-            } else {
-                autoCompletePopup.show(inputTextField);
-            }
-        });
-        service.setOnFailed(event -> {
-            getChildren().remove(spinner);
-            if (!getChildren().contains(iconView)) {
-                getChildren().add(iconView);
-            }
-        });
-        service.setOnRunning(event -> {
-            getChildren().remove(iconView);
-            if (!getChildren().contains(spinner)) {
-                getChildren().add(spinner);
-            }
-        });
-        inputTextField.textProperty().addListener((observable, oldHint, newHint) -> {
-            if (newHint != null && !newHint.trim().isEmpty()) {
-                if (oldHint == null || !newHint.trim().toLowerCase().equals(oldHint.trim().toLowerCase())) {
-                    autoCompletePopup.getSuggestions().clear();
-                    service.setHint(newHint);
-                    service.restart();
-                }
-            }
-        });
+    public TagBar<T> setSuggestionProvider(InputAutoComplete.SuggestionProvider<T> suggestionProvider) {
+        inputAutoComplete.setSuggestionProvider(this, suggestionProvider, tag -> !tags.contains(tag));
+        return this;
     }
 
     private void onChanged(ListChangeListener.Change<? extends T> change) {
@@ -178,23 +96,35 @@ public class TagBar<T> extends HBox {
                     getChildren().subList(change.getFrom(), change.getFrom() + change.getRemovedSize()).clear();
                 }
                 if (change.wasAdded()) {
-                    getChildren().addAll(change.getFrom(), change.getAddedSubList().stream().map(Tag::new).collect(Collectors.toList()));
+                    getChildren().addAll(change.getFrom(), change.getAddedSubList().stream().map(tag -> {
+                        Element element = new Element(toString.apply(tag));
+                        return element.setOnRemoveClick(event -> {
+                            tags.remove(tag);
+                            if (onTagsUpdated != null) {
+                                onTagsUpdated.run();
+                            }
+                        });
+                    }).collect(Collectors.toList()));
                 }
             }
         }
     }
 
-    private class Tag extends HBox {
+    public static class Element extends HBox {
 
-        Tag(T tag) {
-            getStyleClass().setAll("tag");
-            Button removeButton = new Button();
+        private final Button removeButton = new Button();
+
+        public Element(String text) {
+            this.getStyleClass().setAll("tag");
             removeButton.setPadding(Insets.EMPTY);
             MaterialDesignIconView iconView = new MaterialDesignIconView(MaterialDesignIcon.CLOSE_CIRCLE);
             removeButton.setGraphic(iconView);
-            removeButton.setOnAction((evt) -> tags.remove(tag));
-            Text text = new Text(toString.apply(tag));
-            getChildren().addAll(text, removeButton);
+            this.getChildren().addAll(new Text(text), removeButton);
+        }
+
+        public Element setOnRemoveClick(EventHandler<ActionEvent> onRemove) {
+            removeButton.setOnAction(onRemove);
+            return this;
         }
     }
 }

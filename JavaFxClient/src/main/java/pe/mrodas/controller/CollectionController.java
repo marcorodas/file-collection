@@ -6,6 +6,7 @@ import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
+import javafx.scene.control.Label;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.image.Image;
@@ -85,7 +86,7 @@ public class CollectionController extends BaseController {
         private final List<String> extensions;
         private final SimpleObjectProperty<List<Tag>> tagListProperty = new SimpleObjectProperty<>();
 
-        void buildTagButtons(HBox btnsContainer, Consumer<Tag> onTagSelected) {
+        void buildCategoryButtons(HBox btnsContainer, Consumer<Tag> onTagSelected) {
             tagListProperty.addListener((o, old, tagList) -> {
                 ToggleButton[] buttons = tagList.stream().map(tag -> {
                     ToggleButton toggle = new ToggleButton(tag.getName());
@@ -100,6 +101,11 @@ public class CollectionController extends BaseController {
                 });
             });
         }
+    }
+
+    public void setNumFiles(Label label, int size) {
+        String lbl = String.format("%d file", size);
+        label.setText(size == 1 ? lbl : lbl.concat("s"));
     }
 
     static boolean setImageView(ImageView imageView, File file, double height, SplitPane splitPane) {

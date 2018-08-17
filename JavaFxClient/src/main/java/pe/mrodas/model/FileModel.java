@@ -22,8 +22,11 @@ public interface FileModel {
     @GET("file")
     Call<List<FileItem>> getFiles(@Query("tagsId") List<Integer> tagsId);
 
+    @GET("file/untagged")
+    Call<List<FileItem>> getFilesUntagged(@Query("categoryId") int idCategory);
+
     @GET("file/{idFile}")
-    Call<ResponseBody> getFile(@Path("idFile") Integer idFile);
+    Call<ResponseBody> getFile(@Path("idFile") int idFile);
 
     @POST("file/missing")
     Call<List<FileItem>> getMissingFilesId(@Query("idRoot") int idRoot, @Body List<String> md5List);

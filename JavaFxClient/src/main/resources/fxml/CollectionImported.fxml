@@ -1,26 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import de.jensd.fx.glyphs.materialdesignicons.MaterialDesignIconView?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.ToggleButton?>
 <?import javafx.scene.control.ToolBar?>
 <?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.FlowPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
-<?import de.jensd.fx.glyphs.materialdesignicons.MaterialDesignIconView?>
 <?import org.controlsfx.control.GridView?>
+<?import org.controlsfx.control.SegmentedButton?>
+
 <BorderPane minWidth="925.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="pe.mrodas.controller.CollectionImportedController">
     <bottom>
         <fx:include fx:id="progress" source="ProgressPane.fxml" />
     </bottom>
     <top>
         <VBox fx:id="topPane">
-            <ToolBar>
+            <ToolBar fx:id="topToolBar">
                 <Button mnemonicParsing="false" onAction="#btnMissingOnClick" text="Missing">
                     <graphic>
                         <MaterialDesignIconView glyphName="BASKET_FILL" size="16" strokeType="OUTSIDE" strokeWidth="0.0" />
@@ -28,35 +34,107 @@
                 </Button>
                 <Separator orientation="VERTICAL" />
                 <Label alignment="CENTER" text="Category:" />
-                <HBox fx:id="tagButtons" />
+                <HBox fx:id="categoriesButtons" />
             </ToolBar>
             <HBox fx:id="tagContainer" alignment="CENTER_LEFT" disable="true" spacing="5.0">
                 <VBox.margin>
                     <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                 </VBox.margin>
-                <Label text="Search:">
+                <Label fx:id="lblSearch" text="Search:">
                     <font>
                         <Font name="System Bold" size="12.0" />
                     </font>
                 </Label>
-                <Button mnemonicParsing="false">
+                <Button fx:id="btnFilter" mnemonicParsing="false" onAction="#btnNoFilterOnClick">
                     <graphic>
                         <MaterialDesignIconView glyphName="FILTER_REMOVE" size="14" strokeType="OUTSIDE" strokeWidth="0.0" />
                     </graphic>
                 </Button>
-                <CheckBox mnemonicParsing="false" text="Untagged" />
+                <CheckBox fx:id="chkUntagged" mnemonicParsing="false" text="Untagged" />
             </HBox>
         </VBox>
     </top>
     <center>
         <SplitPane fx:id="splitPane" dividerPositions="0.5" prefHeight="450.0">
-            <GridView fx:id="gridFiles" cellHeight="100.0" cellWidth="100.0" horizontalCellSpacing="5.0" verticalCellSpacing="5.0" />
+            <AnchorPane>
+                <GridView fx:id="gridFiles" cellHeight="100.0" cellWidth="100.0" horizontalCellSpacing="5.0" verticalCellSpacing="5.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                <Label fx:id="lblTotal" style="-fx-background-color: #F2F2F2; -fx-background-radius: 0 3 0 0;" text="0 files" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0">
+                    <padding>
+                        <Insets bottom="2.0" left="5.0" right="5.0" top="2.0" />
+                    </padding>
+                </Label>
+                <VBox fx:id="vBoxImageProperties" layoutX="338.0" layoutY="192.0" spacing="2.0" style="-fx-border-color: #C8C8C8; -fx-border-style: hidden hidden solid solid; -fx-background-color: #F2F2F2;" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                    <padding>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                    </padding>
+                    <Label fx:id="lblTitle" text="Title">
+                        <font>
+                            <Font name="System Bold" size="12.0" />
+                        </font>
+                    </Label>
+                    <VBox fx:id="vBoxCategories" spacing="2.0" />
+                    <VBox fx:id="vBoxTag" spacing="5.0">
+                  <HBox spacing="2.0">
+                     <children>
+                        <Button mnemonicParsing="false" onAction="#btnNewTagOnClick">
+                           <graphic>
+                              <MaterialDesignIconView glyphName="PLUS" size="16" strokeType="OUTSIDE" strokeWidth="0.0" />
+                           </graphic>
+                        </Button>
+                              <TextField fx:id="txtSearchTag" />
+                     </children>
+                  </HBox>
+                        <FlowPane fx:id="flowTags" hgap="2.0" minHeight="150.0" prefWrapLength="150.0" style="-fx-border-color: #C8C8C8;" styleClass="tag-bar" vgap="2.0">
+                     <padding>
+                        <Insets bottom="2.0" left="2.0" right="2.0" top="2.0" />
+                     </padding></FlowPane>
+                    </VBox>
+                    <HBox alignment="CENTER_RIGHT" spacing="5.0">
+                  <HBox fx:id="spinnerHolder" />
+                        <Button minWidth="60.0" mnemonicParsing="false" onAction="#btnSaveOnClick" text="Save" />
+                        <Button minWidth="60.0" mnemonicParsing="false" onAction="#btnCancelOnClick" text="Cancel" />
+                  <padding>
+                     <Insets top="3.0" />
+                  </padding>
+                    </HBox>
+                </VBox>
+                <VBox fx:id="vBoxNewTag" layoutX="164.0" spacing="5.0" style="-fx-border-color: #C8C8C8; -fx-border-style: hidden hidden solid solid; -fx-background-color: #F2F2F2;" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                    <padding>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                    </padding>
+                    <Label text="New Tag">
+                        <font>
+                            <Font name="System Bold" size="12.0" />
+                        </font>
+                    </Label>
+                    <TextField fx:id="txtNewTag" />
+                    <HBox alignment="CENTER_RIGHT" spacing="5.0">
+                        <Button minWidth="60.0" mnemonicParsing="false" onAction="#btnSaveNewTagOnClick" text="Save" />
+                        <Button layoutX="10.0" layoutY="10.0" minWidth="60.0" mnemonicParsing="false" onAction="#btnCancelNewTagOnClick" text="Cancel" />
+                    </HBox>
+                </VBox>
+            </AnchorPane>
             <BorderPane fx:id="imageContainer">
                 <center>
                     <ImageView fx:id="imageView" pickOnBounds="true" preserveRatio="true" />
                 </center>
                 <top>
-                    <ToolBar fx:id="toolbar" disable="true" minWidth="200.0" BorderPane.alignment="CENTER">
+                    <ToolBar fx:id="toolbar" disable="true" BorderPane.alignment="CENTER">
+                        <SegmentedButton fx:id="segButton">
+                            <buttons>
+                                <ToggleButton fx:id="btnCategories" mnemonicParsing="false" text="Categories">
+                                    <graphic>
+                                        <MaterialDesignIconView glyphName="FOLDER" size="16" strokeType="OUTSIDE" strokeWidth="0.0" />
+                                    </graphic>
+                                </ToggleButton>
+                                <ToggleButton fx:id="btnTag" layoutX="10.0" layoutY="10.0" mnemonicParsing="false" text="Tag">
+                                    <graphic>
+                                        <MaterialDesignIconView glyphName="TAG_MULTIPLE" size="16" strokeType="OUTSIDE" strokeWidth="0.0" />
+                                    </graphic>
+                                </ToggleButton>
+                            </buttons>
+                        </SegmentedButton>
+                        <Separator orientation="VERTICAL" />
                         <Button mnemonicParsing="false" onAction="#btnEditOnClick" text="To Edit">
                             <graphic>
                                 <MaterialDesignIconView glyphName="PENCIL" size="16" strokeType="OUTSIDE" strokeWidth="0.0" />

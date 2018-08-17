@@ -53,12 +53,13 @@ public class ServiceGetMissingFiles extends ServiceFiles<Void> {
                 ServiceGetMissingFiles.super.isValidDirPath();
                 super.updateMessage("Getting Missing Files...");
                 List<FileItem> fileItems = RestClient.execute(FileModel.class, fileModel -> fileModel.getMissingFilesId(idRoot, md5List)).body();
-                int fileItemsSize = fileItems == null ? 0 : fileItems.size();
-                for (int i = 0; i < fileItemsSize; i++) {
-                    String progress = String.format("[%d/%d] Downloading...", i + 1, fileItemsSize);
+                int total = fileItems == null ? 0 : fileItems.size();
+                for (int i = 0; i < total; i++) {
+                    this.updateProgress(i, total);
+                    String progress = String.format("[%d/%d] Downloading...", i + 1, total);
                     this.updateMessage(progress);
                     ServiceGetMissingFiles.this.downloadItem(fileItems.get(i));
-                    this.updateProgress(i, fileItemsSize);
+                    this.updateProgress(i + 1, total);
                 }
                 return null;
             }

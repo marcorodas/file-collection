@@ -40,6 +40,7 @@ public class ServiceMoveFiles extends ServiceFiles<Void> {
                 if (!ServiceMoveFiles.super.isValid(sourceFiles)) return null;
                 int total = sourceFiles.size();
                 for (int i = 0; i < total; i++) {
+                    this.updateProgress(i, total);
                     Path src = sourceFiles.get(i).toPath();
                     String format = String.format("Reading file [%d/%d]: %s ...", i, total, src.getFileName());
                     this.updateMessage(format);

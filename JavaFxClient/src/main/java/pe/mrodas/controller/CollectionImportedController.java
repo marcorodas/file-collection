@@ -3,41 +3,35 @@ package pe.mrodas.controller;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.concurrent.Service;
-import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
-import javafx.scene.Node;
+import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.SplitPane;
+import javafx.scene.control.TextField;
+import javafx.scene.control.Toggle;
+import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToolBar;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.Clipboard;
-import javafx.scene.input.ClipboardContent;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import java.io.File;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import lombok.Getter;
-import lombok.Setter;
 import org.controlsfx.control.GridView;
-import org.controlsfx.control.PopOver;
+import org.controlsfx.control.SegmentedButton;
 
-import pe.mrodas.entity.FileItem;
 import pe.mrodas.entity.Tag;
 import pe.mrodas.helper.FileHelper;
 import pe.mrodas.helper.TagBar;
-import pe.mrodas.model.FileModel;
-import pe.mrodas.model.RestClient;
-import pe.mrodas.model.TagModel;
+import pe.mrodas.worker.ServiceGetFileNames;
 import pe.mrodas.worker.ServiceGetMissingFiles;
 import pe.mrodas.worker.ServiceReadFiles;
 
@@ -54,100 +48,153 @@ public class CollectionImportedController {
     @FXML
     public ToolBar toolbar;
     @FXML
-    public HBox tagButtons;
+    public HBox categoriesButtons;
     @FXML
     public HBox tagContainer;
     @FXML
     public VBox topPane;
+    @FXML
+    public Label lblTotal;
+    @FXML
+    public VBox vBoxImageProperties;
+    @FXML
+    public Label lblTitle;
+    @FXML
+    public VBox vBoxCategories;
+    @FXML
+    public VBox vBoxTag;
+    @FXML
+    public TextField txtSearchTag;
+    @FXML
+    public FlowPane flowTags;
+    @FXML
+    public SegmentedButton segButton;
+    @FXML
+    public ToggleButton btnCategories;
+    @FXML
+    public ToggleButton btnTag;
+    @FXML
+    public ToolBar topToolBar;
+    @FXML
+    public CheckBox chkUntagged;
+    @FXML
+    public HBox spinnerHolder;
+    @FXML
+    public VBox vBoxNewTag;
+    @FXML
+    public TextField txtNewTag;
+    @FXML
+    public Label lblSearch;
+    @FXML
+    public Button btnFilter;
     @FXML
     private ProgressController progressController;
 
     @Getter
     private final SimpleObjectProperty<CollectionController.Config> configProperty = new SimpleObjectProperty<>();
     static final String PATH = "cache";
-    private ServiceGetFileFilter serviceGetFileFilter;
+    private ServiceGetFileNames serviceGetFileNames;
     private ServiceReadFiles serviceReadFiles, serviceGetExistingFiles;
     private ServiceGetMissingFiles serviceGetMissingFiles;
     private CollectionController parent;
     private TagBar<Tag> tagBar;
-    private File selectedFile;
-    private Tag selectedTag;
+    private Tag selectedCategory;
+
+    private TagImageViewCtrl tagImageViewCtrl;
+    private TagAssignWindowCtrl tagAssignWinCtrl;
 
     public void initialize() {
         configProperty.addListener((o, old, config) -> {
             parent = config.getParent();
+            tagImageViewCtrl.setConfig(config, this::btnCancelOnClick, this::bindService)
+                    .setInputAutoCompeteTags(txtSearchTag, spinnerHolder)
+                    .setNewTagWindow(config.getRoot().getIdRoot(), vBoxNewTag, txtNewTag);
             this.setServices();
-            config.buildTagButtons(tagButtons, this::onCategoryIsSelected);
-            tagBar = new TagBar<>(Tag::getName, hint -> {
-                Integer idRoot = config.getRoot().getIdRoot();
-                List<Tag> tags = RestClient.execute(TagModel.class, tagModel -> tagModel.getTagSuggestions(idRoot, hint)).body();
-                if (selectedTag != null) {/*
-                    return tags.stream()
-                            .filter(tag -> !tag.getIdTag().equals(selectedTag.getIdTag()))
-                            .collect(Collectors.toList());*/
+            config.buildCategoryButtons(categoriesButtons, this::onCategoryIsSelected);
+            tagBar = new TagBar<>(Tag::getName).setSuggestionProvider(hint -> {
+                List<Tag> tags = tagAssignWinCtrl.getTagList(config.getRoot(), hint, true);
+                if (selectedCategory != null) {
+                    return tags == null ? null : tags.stream()
+                            .filter(tag -> !tag.getIdTag().equals(selectedCategory.getIdTag()))
+                            .collect(Collectors.toList());
                 }
                 return tags;
             });
             tagContainer.getChildren().add(1, tagBar);
-            tagBar.setOnSuggestionIsSelected(this::onTagIsAdded);
+            tagBar.setOnTagsUpdated(this::onTagsUpdated);
         });
-        gridFiles.setCellFactory(param -> new CollectionController.GridCellImage(this::onImageSingleClick, this::onImageDoubleClick));
+        tagAssignWinCtrl = new TagAssignWindowCtrl(vBoxCategories, vBoxTag, flowTags);
+        tagAssignWinCtrl.setContainer(vBoxImageProperties).addListener((observable, oldValue, isVisible) -> {
+            topToolBar.setDisable(isVisible);
+            tagContainer.setDisable(isVisible);
+            gridFiles.setDisable(isVisible);
+            toolbar.setDisable(isVisible);
+        });
+        tagImageViewCtrl = new TagImageViewCtrl(tagAssignWinCtrl, imageView, toolbar, (file, imageView) -> {
+            double height = gridFiles.getHeight() - toolbar.getHeight();
+            return CollectionController.setImageView(imageView, file, height, splitPane);
+        });
+        segButton.getToggleGroup().selectedToggleProperty().addListener((o, old, selected) -> {
+            tagAssignWinCtrl.setVisible(selected != null);
+            if (selected != null) {
+                ToggleButton button = (ToggleButton) selected;
+                lblTitle.setText(button.getText());
+                txtSearchTag.clear();
+                boolean isCategory = btnCategories.equals(selected);
+                if (!isCategory) {
+                    txtNewTag.requestFocus();
+                }
+                tagAssignWinCtrl.showCategories(isCategory);
+                tagImageViewCtrl.onSelectSegmentedBtn(isCategory);
+            }
+        });
+        chkUntagged.selectedProperty().addListener((observable, oldValue, isChecked) -> this.onTagsUpdated());
+        gridFiles.setCellFactory(tagImageViewCtrl::getCellFactory);
     }
 
-    private void onTagIsAdded() {
-        List<Integer> tagsId = tagBar.getTags().stream()
-                .map(Tag::getIdTag)
-                .collect(Collectors.toList());
-        tagsId.add(selectedTag.getIdTag());
-        this.serviceGetFileFilterRestart(tagsId);
-    }
-
-    private void onCategoryIsSelected(Tag tag) {
-        tagContainer.setDisable(tag == null);
-        if (tag == null) {
-            gridFiles.getItems().clear();
-            toolbar.setDisable(true);
-            imageView.setImage(null);
+    private void onTagsUpdated() {
+        boolean isChecked = chkUntagged.isSelected();
+        tagBar.setDisable(isChecked);
+        lblSearch.setDisable(isChecked);
+        btnFilter.setDisable(isChecked);
+        if (isChecked) {
+            tagBar.setOpacity(0.4);
+            serviceGetFileNames.setCategoryId(selectedCategory.getIdTag());
+            this.bindService(serviceGetFileNames);
+            serviceGetFileNames.restart();
         } else {
-            selectedTag = tag;
-            List<Integer> tagsId = Collections.singletonList(tag.getIdTag());
+            tagBar.setOpacity(1);
+            List<Integer> tagsId = tagBar.getTags().stream()
+                    .map(Tag::getIdTag)
+                    .collect(Collectors.toList());
+            tagsId.add(selectedCategory.getIdTag());
+            this.serviceGetFileFilterRestart(tagsId);
+        }
+    }
+
+    private void onCategoryIsSelected(Tag category) {
+        tagContainer.setDisable(category == null);
+        tagBar.getTags().clear();
+        gridFiles.getItems().clear();
+        chkUntagged.setSelected(false);
+        if (category != null) {
+            selectedCategory = category;
+            tagImageViewCtrl.setSelectedCategory(category);
+            List<Integer> tagsId = Collections.singletonList(category.getIdTag());
             this.serviceGetFileFilterRestart(tagsId);
         }
     }
 
     private void serviceGetFileFilterRestart(List<Integer> tagsId) {
-        serviceGetFileFilter.setTagsId(tagsId);
-        this.bindService(serviceGetFileFilter);
-        serviceGetFileFilter.restart();
-    }
-
-    private void onImageSingleClick(File file) {
-        if (!file.equals(selectedFile)) {
-            if (CollectionController.setImageView(imageView, file, gridFiles.getHeight() - toolbar.getHeight(), splitPane)) {
-                toolbar.setDisable(false);
-                selectedFile = file;
-            }
-        }
-    }
-
-    private void onImageDoubleClick(File file, MouseEvent e) {
-        ClipboardContent content = new ClipboardContent();
-        content.putString(file.getAbsolutePath());
-        Clipboard.getSystemClipboard().setContent(content);
-        Label text = new Label("Image Path Copied!");
-        VBox box = new VBox(text);
-        box.setAlignment(Pos.CENTER);
-        box.setPadding(new Insets(0, 20, 0, 20));
-        PopOver popOver = new PopOver(box);
-        popOver.setDetachable(false);
-        popOver.setArrowLocation(PopOver.ArrowLocation.TOP_CENTER);
-        popOver.show((Node) e.getSource(), -2);
+        serviceGetFileNames.setTagsId(tagsId);
+        this.bindService(serviceGetFileNames);
+        serviceGetFileNames.restart();
     }
 
     private void setServices() {
-        serviceGetFileFilter = new ServiceGetFileFilter();
-        serviceGetFileFilter.setOnSucceeded(event -> {
-            List<String> fileList = serviceGetFileFilter.getValue();
+        serviceGetFileNames = new ServiceGetFileNames();
+        serviceGetFileNames.setOnSucceeded(event -> {
+            List<String> fileList = serviceGetFileNames.getValue();
             serviceReadFiles.setFilter(file -> {
                 String fileName = file.getName();
                 return fileList.contains(fileName);
@@ -155,12 +202,14 @@ public class CollectionImportedController {
             this.bindService(serviceReadFiles);
             serviceReadFiles.restart();
         });
-        this.bindService(serviceGetFileFilter);
-        serviceGetFileFilter.setOnFailed(parent::onServiceFailed);
+        this.bindService(serviceGetFileNames);
+        serviceGetFileNames.setOnFailed(parent::onServiceFailed);
+        serviceGetFileNames.setOnRunning(event -> parent.setNumFiles(lblTotal, 0));
         Path currentPath = parent.getPath(PATH);
         serviceReadFiles = new ServiceReadFiles(currentPath, null);
         serviceReadFiles.setOnSucceeded(event -> {
             List<File> files = serviceReadFiles.getValue();
+            parent.setNumFiles(lblTotal, files.size());
             gridFiles.setItems(FXCollections.observableArrayList(files));
         });
         serviceReadFiles.setOnFailed(parent::onServiceFailed);
@@ -177,6 +226,7 @@ public class CollectionImportedController {
         Integer idRoot = parent.getConfigProperty().get().getRoot().getIdRoot();
         serviceGetMissingFiles = new ServiceGetMissingFiles(currentPath, idRoot);
         serviceGetMissingFiles.setOnFailed(parent::onServiceFailed);
+        serviceGetMissingFiles.setOnRunning(event -> parent.setNumFiles(lblTotal, 0));
         serviceGetMissingFiles.setOnSucceeded(event -> {
             this.bindService(serviceReadFiles);
             serviceReadFiles.restart();
@@ -189,27 +239,55 @@ public class CollectionImportedController {
         progressController.bindService(service);
     }
 
-    class ServiceGetFileFilter extends Service<List<String>> {
-        @Setter
-        private List<Integer> tagsId;
-
-        @Override
-        protected Task<List<String>> createTask() {
-            return new Task<List<String>>() {
-                @Override
-                protected List<String> call() throws Exception {
-                    super.updateMessage("Getting Files...");
-                    List<FileItem> fileItems = RestClient.execute(FileModel.class, fileModel ->
-                            fileModel.getFiles(tagsId)).body();
-                    if (fileItems == null) {
-                        return new ArrayList<>();
-                    }
-                    return fileItems.stream()
-                            .map(item -> String.format("%s.%s", item.getMd5(), item.getExtension()))
-                            .collect(Collectors.toList());
-                }
-            };
+    @FXML
+    public void btnSaveOnClick(ActionEvent e) {
+        Toggle selected = segButton.getToggleGroup().getSelectedToggle();
+        if (selected == null) {
+            return;
         }
+        if (btnCategories.equals(selected)) {
+            tagAssignWinCtrl.saveCategories(gridFiles);
+        } else {
+            tagAssignWinCtrl.saveTags(gridFiles, (categoriesId, idTagsToSave) -> {
+                List<Integer> tagBarIds = tagBar.getTags().stream()
+                        .map(Tag::getIdTag).filter(id -> !categoriesId.contains(id))
+                        .collect(Collectors.toList());
+                return idTagsToSave.isEmpty()
+                        ? (chkUntagged.isSelected() || tagBarIds.isEmpty())
+                        : idTagsToSave.containsAll(tagBarIds);
+            });
+        }
+    }
+
+    @FXML
+    public void btnCancelOnClick(ActionEvent e) {
+        segButton.getButtons().forEach(btn -> {
+            if (btn.isSelected()) {
+                btn.setSelected(false);
+            }
+        });
+    }
+
+    @FXML
+    public void btnNewTagOnClick(ActionEvent event) {
+        txtNewTag.setText(txtSearchTag.getText());
+        vBoxNewTag.setVisible(true);
+    }
+
+    @FXML
+    public void btnSaveNewTagOnClick(ActionEvent event) {
+        tagAssignWinCtrl.getTagWindowCtrl().save();
+    }
+
+    @FXML
+    public void btnCancelNewTagOnClick(ActionEvent event) {
+        vBoxNewTag.setVisible(false);
+    }
+
+    @FXML
+    public void btnNoFilterOnClick(ActionEvent event) {
+        tagBar.getTags().clear();
+        this.onTagsUpdated();
     }
 
     @FXML
@@ -219,10 +297,10 @@ public class CollectionImportedController {
     }
 
     @FXML
-    public void btnEditOnClick(ActionEvent event) {
+    private void btnEditOnClick(ActionEvent event) {
     }
 
     @FXML
-    public void btnTrashOnClick(ActionEvent event) {
+    private void btnTrashOnClick(ActionEvent event) {
     }
 }

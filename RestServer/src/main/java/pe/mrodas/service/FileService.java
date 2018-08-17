@@ -34,11 +34,18 @@ public class FileService {
         return FileItemDA.select(tagsId).toArray(new FileItem[0]);
     }
 
+    @Secured
+    @GET()
+    @Path("untagged")
+    public FileItem[] select(@QueryParam("categoryId") int idCategory) throws Exception {
+        return FileItemDA.selectUntagged(idCategory).toArray(new FileItem[0]);
+    }
+
     interface FileResponseBuilder {
         Response build(String fileName, String mimeType, FileItem fileItem);
     }
 
-    private Response buildFileResponse(Integer idFile, FileResponseBuilder builder) throws Exception {
+    private Response buildFileResponse(int idFile, FileResponseBuilder builder) throws Exception {
         FileItem fileItem = FileItemDA.select(idFile);
         if (fileItem != null && fileItem.getIdFile() > 0) {
             String fileName = String.format("%s.%s", fileItem.getMd5(), fileItem.getExtension());
@@ -53,7 +60,7 @@ public class FileService {
     @GET
     @Path("download/{idFile}")
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
-    public Response downloadFile(@PathParam("idFile") Integer idFile) throws Exception {
+    public Response downloadFile(@PathParam("idFile") int idFile) throws Exception {
         return buildFileResponse(idFile, (fileName, mimeType, fileItem) -> {
             Response.ResponseBuilder builder = Response.ok(fileItem.getContent(), mimeType);
             return builder.header("content-disposition", "attachment; filename = " + fileName)
@@ -64,7 +71,7 @@ public class FileService {
     @Secured
     @GET
     @Path("{idFile}")
-    public Response getFile(@PathParam("idFile") Integer idFile) throws Exception {
+    public Response getFile(@PathParam("idFile") int idFile) throws Exception {
         return buildFileResponse(idFile, (fileName, mimeType, fileItem) -> {
             StreamingOutput stream = output -> output.write(fileItem.getContent());
             return Response.ok(stream, mimeType).build();

@@ -8,9 +8,11 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TextInputDialog;
 import javafx.scene.control.ToolBar;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
@@ -72,14 +74,14 @@ public class CollectionStageController {
     private ServiceGetImageFromUrl serviceGetImageFromUrl;
     private ServiceUploadFiles serviceUploadFiles;
     private ServiceMoveFiles serviceMoveFiles;
+    private Dialog<String> urlDialog;
     private File selectedFile;
     private Tag selectedTag;
-    private Consumer<File> setImageView;
 
     public void initialize() {
         configProperty.addListener((o, old, config) -> {
             parent = config.getParent();
-            config.buildTagButtons(tagButtons, tag -> {
+            config.buildCategoryButtons(tagButtons, tag -> {
                 btnUpload.setDisable(tag == null || gridUpload.getItems().isEmpty());
                 selectedTag = tag;
             });
@@ -88,10 +90,15 @@ public class CollectionStageController {
             this.setServiceGetImageFromUrl();
             this.setServiceUploadFiles();
             this.setServiceMoveFiles();
+            this.buildUrlDialog();
             this.bindService(serviceReadFiles);
+            this.configGrids();
             serviceReadFiles.restart();
         });
-        setImageView = file -> {
+    }
+
+    private void configGrids() {
+        Consumer<File> setImageView = file -> {
             if (!file.equals(selectedFile)) {
                 if (CollectionController.setImageView(imageView, file, gridFiles.getHeight(), splitPane)) {
                     toolbar.setDisable(false);
@@ -109,7 +116,7 @@ public class CollectionStageController {
         gridUpload.setItems(FXCollections.observableArrayList());
         gridUpload.itemsProperty().get().addListener((ListChangeListener<? super File>) c -> {
             int size = c.getList().size();
-            lblNumFilesUpload.setText(String.valueOf(size));
+            parent.setNumFiles(lblNumFilesUpload, size);
         });
         gridUpload.setCellFactory(param -> new CollectionController.GridCellImage(setImageView, (file, e) -> {
             gridFiles.getItems().add(0, file);
@@ -132,12 +139,11 @@ public class CollectionStageController {
                         .filter(file -> !gridUpload.getItems().contains(file))
                         .collect(Collectors.toList());
             }
-            String len = String.valueOf(files.size());
-            lblTotal.setText(len);
+            parent.setNumFiles(lblTotal, files.size());
             gridFiles.setItems(FXCollections.observableArrayList(files));
             gridFiles.itemsProperty().get().addListener((ListChangeListener<? super File>) c -> {
                 int size = gridFiles.getItems().size();
-                lblTotal.setText(String.valueOf(size));
+                parent.setNumFiles(lblTotal, size);
             });
             if (tagButtons.getChildren().isEmpty()) {
                 this.bindService(serviceGetCategories);
@@ -189,6 +195,26 @@ public class CollectionStageController {
         });
     }
 
+    private void buildUrlDialog() {
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setHeaderText(null);
+        dialog.setTitle("Image URL");
+        dialog.setContentText("URL:");
+        TextField textField = dialog.getEditor();
+        textField.setPromptText("Enter a valid URL");
+        Button okButton = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
+        okButton.addEventFilter(ActionEvent.ACTION, e -> {
+            try {
+                String url = textField.getText();
+                serviceGetImageFromUrl.setImageUrl(url);
+            } catch (Exception ex) {
+                e.consume();
+                parent.dialogWarning(ex.getMessage());
+            }
+        });
+        urlDialog = parent.dialogCustom(dialog);
+    }
+
     private void clearGridUpload(List<String> uploadedFileNames) {
         String selectedFileName = selectedFile.getName();
         boolean selectedFileUploaded;
@@ -236,10 +262,12 @@ public class CollectionStageController {
 
     @FXML
     public void btnEditOnClick(ActionEvent e) {
+
     }
 
     @FXML
     public void btnTrashOnClick(ActionEvent e) {
+
     }
 
     @FXML
@@ -251,24 +279,10 @@ public class CollectionStageController {
 
     @FXML
     public void btnGetFromUrlOnClick(ActionEvent event) {
-        parent.dialogInputText(dialog -> {
-            dialog.setTitle("Image URL");
-            dialog.setContentText("URL:");
-            TextField textField = dialog.getEditor();
-            textField.setPromptText("Enter a valid URL");
-            Button okButton = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
-            okButton.addEventFilter(ActionEvent.ACTION, e -> {
-                try {
-                    serviceGetImageFromUrl.setImageUrl(textField.getText());
-                } catch (Exception ex) {
-                    e.consume();
-                    parent.dialogWarning(ex.getMessage());
-                }
-            });
-        }).ifPresent(result -> {
+        urlDialog.showAndWait().ifPresent(result -> {
             this.bindService(serviceGetImageFromUrl);
             serviceGetImageFromUrl.restart();
+            ((TextInputDialog) urlDialog).getEditor().clear();
         });
     }
-
 }
