@@ -1,6 +1,7 @@
 package pe.mrodas.service;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
@@ -83,6 +84,13 @@ public class FileService {
     @Path("missing")
     public FileItem[] getMissingFilesId(@QueryParam("idRoot") int idRoot, List<String> md5List) throws Exception {
         return FileItemDA.select(idRoot, md5List).toArray(new FileItem[0]);
+    }
+
+    @Secured
+    @DELETE
+    public Response delete(@QueryParam("md5") String md5) throws Exception {
+        FileItemDA.delete(md5);
+        return Response.noContent().build();
     }
 
     @Secured

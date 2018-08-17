@@ -11,6 +11,7 @@ import lombok.experimental.UtilityClass;
 import pe.mrodas.entity.Tag;
 import pe.mrodas.entity.TagListsToSave;
 import pe.mrodas.helper.SqlInOperator;
+import pe.mrodas.jdbc.Adapter;
 import pe.mrodas.jdbc.SqlInsert;
 import pe.mrodas.jdbc.SqlQuery;
 
@@ -119,15 +120,19 @@ public class TagDA {
                 .executeList();
     }
 
-    public void save(Connection conn, String md5, TagListsToSave tagListsToSave) throws Exception {
-        Integer idFile = new SqlQuery<Integer>(conn, false).setSql(new String[]{
-                "SELECT idFile FROM file_item WHERE md5 = :md5"
-        }).addParameter("md5", md5).execute(rs -> rs.next() ? rs.getInt("idFile") : null);
-        if (idFile == null) {
-            throw new NotFoundException("Unable to find idFile to save tags!");
-        }
-        TagDA.insertTagListToFile(conn, idFile, tagListsToSave.getIdTagsToAdd());
-        TagDA.deleteTagListFromFile(conn, idFile, tagListsToSave.getIdTagsToDelete());
+    public void save(String md5, TagListsToSave tagListsToSave) throws Exception {
+        Adapter.batch(conn -> {
+            Integer idFile = new SqlQuery<Integer>(conn, false)
+                    .setSql(new String[]{
+                            "SELECT idFile FROM file_item WHERE md5 = :md5"
+                    }).addParameter("md5", md5)
+                    .execute(rs -> rs.next() ? rs.getInt("idFile") : null);
+            if (idFile == null) {
+                throw new NotFoundException("Unable to find idFile to save tags!");
+            }
+            TagDA.insertTagListToFile(conn, idFile, tagListsToSave.getIdTagsToAdd());
+            TagDA.deleteTagListFromFile(conn, idFile, tagListsToSave.getIdTagsToDelete());
+        });
     }
 
     private void deleteTagListFromFile(Connection conn, Integer idFile, List<Integer> idTagsToDelete) throws Exception {

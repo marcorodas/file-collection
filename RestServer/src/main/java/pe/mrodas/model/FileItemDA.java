@@ -1,6 +1,7 @@
 package pe.mrodas.model;
 
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.List;
 
 import lombok.experimental.UtilityClass;
@@ -111,4 +112,21 @@ public class FileItemDA {
         });
     }
 
+    public void delete(String md5) throws Exception {
+        Adapter.batch(connection -> {
+            int idFile = new SqlQuery<Integer>(connection, false)
+                    .setSql("SELECT idFile FROM file_item WHERE md5 = :md5")
+                    .addParameter("md5", md5)
+                    .execute(rs -> rs.next() ? rs.getInt("idFile") : 0);
+            if (idFile > 0) {
+                List<String> tables = Arrays.asList("file_x_tag", "file_content", "file_item");
+                for (String table : tables) {
+                    new SqlQuery<>(connection, false)
+                            .setSql(String.format("DELETE FROM %s WHERE idFile = :idFile", table))
+                            .addParameter("idFile", idFile)
+                            .execute();
+                }
+            }
+        });
+    }
 }

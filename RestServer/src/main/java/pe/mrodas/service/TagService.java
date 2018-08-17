@@ -12,7 +12,6 @@ import javax.ws.rs.core.SecurityContext;
 
 import pe.mrodas.entity.Tag;
 import pe.mrodas.entity.TagListsToSave;
-import pe.mrodas.jdbc.Adapter;
 import pe.mrodas.model.TagDA;
 import pe.mrodas.service.config.Secured;
 import pe.mrodas.service.config.SecuredRequestFilter;
@@ -62,9 +61,7 @@ public class TagService {
     @Path("lists")
     @PUT
     public Response save(@QueryParam("md5") String md5, TagListsToSave tagListsToSave) throws Exception {
-        Adapter.batch(conn -> {
-            TagDA.save(conn, md5, tagListsToSave);
-        });
+        TagDA.save(md5, tagListsToSave);
         return Response.noContent().build();
     }
 }
