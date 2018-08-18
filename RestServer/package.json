@@ -1,0 +1,14 @@
+{
+ "name": "LoginApp",
+ "version": "1.0.0",
+ "description": "",
+ "author": "Marco Rodas <marco.ardp.pucp@gmail.com>",
+ "pre-requisitos": {
+  "tomcatRedeploy": "Ensure tomcat-users.xml have 'manager-script' role. Ensure the file '~/.m2/settings.xml' exists"
+ },
+ "scripts": {
+  "tomcatRedeploy": "git pull; mvn clean tomcat6:redeploy"
+ },
+ "dependencies": {},
+ "devDependencies": {}
+}
