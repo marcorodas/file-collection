@@ -1,21 +1,24 @@
 package pe.mrodas;
 
-import com.google.gson.Gson;
 import javafx.application.Application;
 import javafx.scene.control.Alert;
 import javafx.stage.Stage;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.stream.Stream;
+
+import com.google.gson.Gson;
 import okhttp3.ResponseBody;
+
 import pe.mrodas.controller.LoginController;
 import pe.mrodas.entity.Session;
 import pe.mrodas.helper.ExceptionAlert;
 import pe.mrodas.model.RestClient;
 import pe.mrodas.model.RestServerException;
 import pe.mrodas.rest.ApiError;
-
-import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.stream.Stream;
 
 public class MainApp extends Application {
 
@@ -36,7 +39,8 @@ public class MainApp extends Application {
 
     @Override
     public void start(Stage stage) throws Exception {
-        RestClient.setBaseUrl("http://localhost:9090/file-collection/rest/");
+        String url = this.getUrl();
+        RestClient.setBaseUrl(url.endsWith("/") ? url : url.concat("/"));
         RestClient.setServerErrorHandler(this::onServerError);
         Stream<String> icons = Stream.of("16x16", "32x32", "96x96")
                 .map(s -> String.format("images/favicon-%s.png", s));
@@ -50,6 +54,17 @@ public class MainApp extends Application {
 
     public static void main(String[] args) {
         launch(args);
+    }
+
+    private String getUrl() {
+        Properties urlProperties = new Properties();
+        ClassLoader loader = this.getClass().getClassLoader();
+        try (InputStream file = loader.getResourceAsStream("url.properties")) {
+            urlProperties.load(file);
+            return urlProperties.getProperty("url");
+        } catch (IOException e) {
+            return "http://localhost:9090/file-collection/rest/";
+        }
     }
 
     private Alert onException(Throwable e, Boolean debugMode) {
