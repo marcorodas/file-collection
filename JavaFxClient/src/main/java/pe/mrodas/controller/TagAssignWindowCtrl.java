@@ -67,6 +67,7 @@ class TagAssignWindowCtrl {
         this.config = config;
         this.btnCancelOnClick = btnCancelOnClick;
         this.bindService = bindService;
+        serviceSaveTagList.setOnFailed(config.getParent()::onServiceFailed);
         config.getTagListProperty().addListener((o, old, categories) -> {
             for (Tag category : categories) {
                 categoriesId.add(category.getIdTag());

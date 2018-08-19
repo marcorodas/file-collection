@@ -152,6 +152,10 @@ public class TagDA {
         if (idTagsToAdd.isEmpty()) {
             return;
         }
+        TagDA.checkForDuplicates(conn, idFile, idTagsToAdd);
+        if (idTagsToAdd.isEmpty()) {
+            return;
+        }
         SqlInOperator<Integer> inOperator = new SqlInOperator<>(idTagsToAdd);
         String nameFields = inOperator.toString();
         String[] nameFieldArray = nameFields.substring(1, nameFields.length() - 1).split(",");
@@ -163,5 +167,18 @@ public class TagDA {
         }).addParameter("idFile", idFile);
         inOperator.getParameters().forEach(query::addParameter);
         query.execute();
+    }
+
+    private static void checkForDuplicates(Connection conn, int idFile, List<Integer> idTagsToAdd) throws Exception {
+        List<Integer> idTagsForFile = new SqlQuery<Integer>(conn, false).setSql(new String[]{
+                "SELECT idTag",
+                "    FROM file_x_tag",
+                "    WHERE idFile = :idFile"
+        }).addParameter("idFile", idFile).execute((rs, list) -> {
+            while (rs.next()) {
+                list.add(rs.getInt("idTag"));
+            }
+        });
+        idTagsToAdd.removeIf(idTagsForFile::contains);
     }
 }

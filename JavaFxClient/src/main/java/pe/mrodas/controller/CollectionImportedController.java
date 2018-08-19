@@ -246,6 +246,9 @@ public class CollectionImportedController {
     }
 
     private void bindService(Service<?> service) {
+        if (service.getOnFailed() == null) {
+            service.setOnFailed(parent::onServiceFailed);
+        }
         topPane.disableProperty().bind(service.runningProperty());
         splitPane.disableProperty().bind(service.runningProperty());
         progressController.bindService(service);
