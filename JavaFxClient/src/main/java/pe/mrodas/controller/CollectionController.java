@@ -11,7 +11,6 @@ import javafx.scene.control.SplitPane;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 import java.io.File;
@@ -19,26 +18,39 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.InvalidParameterException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import lombok.Data;
 import lombok.Getter;
-import org.controlsfx.control.GridCell;
 import org.controlsfx.control.SegmentedButton;
 
 import pe.mrodas.MainApp;
 import pe.mrodas.entity.Root;
 import pe.mrodas.entity.Tag;
 import pe.mrodas.helper.GuiHelper;
+import pe.mrodas.worker.ServiceMoveFilesTo;
 
 public class CollectionController extends BaseController {
+
+    @Data
+    static class Config {
+        private final CollectionController parent;
+        private final Root root;
+        private final List<String> extensions;
+        private final SimpleObjectProperty<List<Tag>> tagListProperty = new SimpleObjectProperty<>();
+    }
 
     @FXML
     private CollectionStageController collectionStageController;
     @FXML
     private CollectionImportedController collectionImportedController;
+    @FXML
+    private CollectionEditController collectionEditController;
+    @FXML
+    private CollectionTrashController collectionTrashController;
 
     @Getter
     private final SimpleObjectProperty<Config> configProperty = new SimpleObjectProperty<>();
@@ -49,26 +61,26 @@ public class CollectionController extends BaseController {
     }
 
     Stage prepareStage(Root root, List<String> extensions, Node node) throws IOException {
+        this.checkRoot(root);
+        super.<CollectionController>setOnControllerReady(ctrl -> {
+            ctrl.setRootDir(root);
+            Config config = new Config(ctrl, root, extensions);
+            ctrl.getConfigProperty().set(config);
+        });
+        return super.prepareStage(node);
+    }
+
+    private void checkRoot(Root root) {
         if (root == null) {
             throw new InvalidParameterException("root can't be null");
         }
         if ((root.getIdRoot() == null ? 0 : root.getIdRoot()) <= 0) {
             throw new InvalidParameterException("idRoot must be greater than zero");
         }
-        super.<CollectionController>setOnControllerReady(ctrl -> {
-            Config config = new Config(ctrl, root, extensions);
-            ctrl.setRootDir(root);
-            ctrl.getConfigProperty().set(config);
-        });
-        return super.prepareStage(node);
     }
 
     private void setRootDir(Root root) {
         rootDir = Paths.get(MainApp.getSession().getWorkingDir(), root.getName());
-    }
-
-    Path getPath(String folder) {
-        return rootDir.resolve(folder);
     }
 
     @Override
@@ -76,36 +88,67 @@ public class CollectionController extends BaseController {
         configProperty.addListener((o, old, config) -> {
             collectionStageController.getConfigProperty().set(config);
             collectionImportedController.getConfigProperty().set(config);
+            collectionEditController.getConfigProperty().set(config);
+            collectionTrashController.getConfigProperty().set(config);
         });
     }
 
-    @Data
-    static class Config {
-        private final CollectionController parent;
-        private final Root root;
-        private final List<String> extensions;
-        private final SimpleObjectProperty<List<Tag>> tagListProperty = new SimpleObjectProperty<>();
+    Path getPath(String folder) {
+        return rootDir.resolve(folder);
+    }
 
-        void buildCategoryButtons(HBox btnsContainer, Consumer<Tag> onTagSelected) {
-            tagListProperty.addListener((o, old, tagList) -> {
-                ToggleButton[] buttons = tagList.stream().map(tag -> {
-                    ToggleButton toggle = new ToggleButton(tag.getName());
-                    toggle.setUserData(tag);
-                    return toggle;
-                }).toArray(ToggleButton[]::new);
-                SegmentedButton groupBtns = new SegmentedButton(buttons);
-                btnsContainer.getChildren().setAll(groupBtns);
-                groupBtns.getToggleGroup().selectedToggleProperty().addListener((obs, oldToggle, toggle) -> {
-                    Tag tag = toggle == null ? null : (Tag) toggle.getUserData();
-                    onTagSelected.accept(tag);
-                });
+    void setNumFiles(Label label, int size) {
+        String lbl = String.format("%d file", size);
+        label.setText(size == 1 ? lbl : lbl.concat("s"));
+    }
+
+    ServiceMoveFilesTo getServiceMoveFilesTo(String targetPath) {
+        ServiceMoveFilesTo serviceMoveFilesTo = new ServiceMoveFilesTo(this.getPath(targetPath));
+        if (CollectionEditController.PATH.equals(targetPath)) {
+            serviceMoveFilesTo.setFileNameBuilder(filePath -> {
+                String pattern = "yyyymmddhhmmss";
+                return new SimpleDateFormat(pattern).format(new Date());
             });
+        }
+        return serviceMoveFilesTo;
+    }
+
+    void addToGrid(String targetPath, ServiceMoveFilesTo service) {
+        File file = service.getValue().get(0).toFile();
+        switch (targetPath) {
+            case CollectionStageController.PATH:
+                collectionStageController.addToGrid(file);
+                break;
+            case CollectionImportedController.PATH:
+                collectionImportedController.addToGrid(file);
+                break;
+            case CollectionEditController.PATH:
+                collectionEditController.addToGrid(file);
+                break;
+            case CollectionTrashController.PATH:
+                collectionTrashController.addToGrid(file);
+                break;
         }
     }
 
-    public void setNumFiles(Label label, int size) {
-        String lbl = String.format("%d file", size);
-        label.setText(size == 1 ? lbl : lbl.concat("s"));
+    void updateImportedFilesGrid(int idCategory) {
+        collectionImportedController.updateImportedFilesGrid(idCategory);
+    }
+
+    void buildCategoryButtons(HBox btnsContainer, Consumer<Tag> onTagSelected) {
+        configProperty.get().getTagListProperty().addListener((o, old, tagList) -> {
+            ToggleButton[] buttons = tagList.stream().map(tag -> {
+                ToggleButton toggle = new ToggleButton(tag.getName());
+                toggle.setUserData(tag);
+                return toggle;
+            }).toArray(ToggleButton[]::new);
+            SegmentedButton groupBtns = new SegmentedButton(buttons);
+            btnsContainer.getChildren().setAll(groupBtns);
+            groupBtns.getToggleGroup().selectedToggleProperty().addListener((obs, oldToggle, toggle) -> {
+                Tag tag = toggle == null ? null : (Tag) toggle.getUserData();
+                onTagSelected.accept(tag);
+            });
+        });
     }
 
     static boolean setImageView(ImageView imageView, File file, double height, SplitPane splitPane) {
@@ -127,37 +170,4 @@ public class CollectionController extends BaseController {
         return Bindings.min(maxHeight * image.getWidth() / image.getHeight(), dividerWidth);
     }
 
-    static class GridCellImage extends GridCell<File> {
-        private final Consumer<File> onMouseSingleClick;
-        private final BiConsumer<File, MouseEvent> onMouseDoubleClick;
-
-        GridCellImage(Consumer<File> onMouseSingleClick, BiConsumer<File, MouseEvent> onMouseDoubleClick) {
-            this.onMouseSingleClick = onMouseSingleClick;
-            this.onMouseDoubleClick = onMouseDoubleClick;
-            this.setOnMouseClicked(this::onMouseClick);
-        }
-
-        void onMouseClick(MouseEvent e) {
-            int clickCount = e.getClickCount();
-            if (clickCount > 0) {
-                File item = this.getItem();
-                if (clickCount == 1) {
-                    onMouseSingleClick.accept(item);
-                } else if (onMouseDoubleClick != null) {
-                    onMouseDoubleClick.accept(item, e);
-                }
-            }
-        }
-
-        @Override
-        protected void updateItem(File file, boolean empty) {
-            super.updateItem(file, empty);
-            if (!empty && file != null) {
-                Image image = GuiHelper.getImageFromFile(file, 100);
-                if (image != null) {
-                    this.setGraphic(new ImageView(image));
-                }
-            }
-        }
-    }
 }

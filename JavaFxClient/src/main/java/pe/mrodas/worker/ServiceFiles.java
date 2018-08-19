@@ -73,7 +73,7 @@ abstract class ServiceFiles<T> extends Service<T> {
     /**
      * A shortcut of {@link ServiceFiles#getDirPath()}.resolve(other)
      *
-     * @param other the path string to resolve against this pat
+     * @param other the path string to resolve against this path
      * @return the resulting path
      * @see java.nio.file.Path#resolve(String)
      */

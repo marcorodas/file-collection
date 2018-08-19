@@ -8,6 +8,7 @@ import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.http.Body;
+import retrofit2.http.DELETE;
 import retrofit2.http.GET;
 import retrofit2.http.Multipart;
 import retrofit2.http.POST;
@@ -30,6 +31,9 @@ public interface FileModel {
 
     @POST("file/missing")
     Call<List<FileItem>> getMissingFilesId(@Query("idRoot") int idRoot, @Body List<String> md5List);
+
+    @DELETE("file")
+    Call<ResponseBody> delete(@Query("md5") String md5);
 
     @Multipart
     @POST("file")

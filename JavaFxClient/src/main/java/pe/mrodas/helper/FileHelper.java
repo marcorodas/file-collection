@@ -47,6 +47,10 @@ public class FileHelper {
         return null;
     }
 
+    public String getName(Path path) {
+        return FileHelper.getName(path.getFileName().toString());
+    }
+
     public String getName(String filename) {
         if (filename != null) {
             int dirSeparatorIndex = FileHelper.getSeparatorPathIndex(filename);

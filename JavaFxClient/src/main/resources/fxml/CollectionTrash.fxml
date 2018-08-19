@@ -1,20 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import de.jensd.fx.glyphs.materialdesignicons.MaterialDesignIconView?>
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
 <?import javafx.scene.control.SplitPane?>
 <?import javafx.scene.control.ToolBar?>
 <?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
+<?import de.jensd.fx.glyphs.materialdesignicons.MaterialDesignIconView?>
 <?import org.controlsfx.control.GridView?>
-
 <BorderPane minWidth="925.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="pe.mrodas.controller.CollectionTrashController">
     <bottom>
         <fx:include fx:id="progress" source="ProgressPane.fxml" />
     </bottom>
    <center>
        <SplitPane fx:id="splitPane" dividerPositions="0.5" prefHeight="450.0" BorderPane.alignment="CENTER">
-           <GridView fx:id="gridFiles" cellHeight="100.0" cellWidth="100.0" horizontalCellSpacing="5.0" verticalCellSpacing="5.0" />
+         <AnchorPane>
+            <children>
+                 <GridView fx:id="gridFiles" cellHeight="100.0" cellWidth="100.0" horizontalCellSpacing="5.0" verticalCellSpacing="5.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+               <Label fx:id="lblTotal" style="-fx-background-color: #F2F2F2; -fx-background-radius: 0 3 0 0;" text="0 files" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0">
+                  <padding>
+                     <Insets bottom="2.0" left="5.0" right="5.0" top="2.0" />
+                  </padding>
+               </Label>
+            </children>
+         </AnchorPane>
            <BorderPane fx:id="imageContainer">
               <center>
                   <ImageView fx:id="imageView" pickOnBounds="true" preserveRatio="true" />

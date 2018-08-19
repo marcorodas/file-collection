@@ -4,6 +4,7 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.concurrent.Service;
+import javafx.concurrent.WorkerStateEvent;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -31,9 +32,11 @@ import lombok.Getter;
 import org.controlsfx.control.GridView;
 
 import pe.mrodas.entity.Tag;
+import pe.mrodas.helper.FileHelper;
+import pe.mrodas.helper.GridCellImage;
 import pe.mrodas.worker.ServiceGetCategories;
 import pe.mrodas.worker.ServiceGetImageFromUrl;
-import pe.mrodas.worker.ServiceMoveFiles;
+import pe.mrodas.worker.ServiceMoveFilesTo;
 import pe.mrodas.worker.ServiceReadFiles;
 import pe.mrodas.worker.ServiceUploadFiles;
 
@@ -65,7 +68,7 @@ public class CollectionStageController {
     @FXML
     private ProgressController progressController;
 
-    private static final String PATH = "stage";
+    static final String PATH = "stage";
     @Getter
     private final SimpleObjectProperty<CollectionController.Config> configProperty = new SimpleObjectProperty<>();
     private CollectionController parent;
@@ -73,17 +76,17 @@ public class CollectionStageController {
     private ServiceReadFiles serviceReadFiles;
     private ServiceGetImageFromUrl serviceGetImageFromUrl;
     private ServiceUploadFiles serviceUploadFiles;
-    private ServiceMoveFiles serviceMoveFiles;
+    private ServiceMoveFilesTo serviceMoveFiles, serviceMoveFilesToEdit, serviceMoveFilesToTrash;
     private Dialog<String> urlDialog;
     private File selectedFile;
-    private Tag selectedTag;
+    private Tag selectedCategory;
 
     public void initialize() {
         configProperty.addListener((o, old, config) -> {
             parent = config.getParent();
-            config.buildCategoryButtons(tagButtons, tag -> {
-                btnUpload.setDisable(tag == null || gridUpload.getItems().isEmpty());
-                selectedTag = tag;
+            parent.buildCategoryButtons(tagButtons, category -> {
+                btnUpload.setDisable(category == null || gridUpload.getItems().isEmpty());
+                selectedCategory = category;
             });
             this.setServiceReadFiles(config.getExtensions());
             this.setServiceGetCategories(config);
@@ -106,10 +109,10 @@ public class CollectionStageController {
                 }
             }
         };
-        gridFiles.setCellFactory(param -> new CollectionController.GridCellImage(setImageView, (file, e) -> {
+        gridFiles.setCellFactory(param -> new GridCellImage(setImageView, (file, e) -> {
             gridUpload.getItems().add(file);
             gridFiles.getItems().remove(file);
-            if (selectedTag != null) {
+            if (selectedCategory != null) {
                 btnUpload.setDisable(false);
             }
         }));
@@ -118,7 +121,7 @@ public class CollectionStageController {
             int size = c.getList().size();
             parent.setNumFiles(lblNumFilesUpload, size);
         });
-        gridUpload.setCellFactory(param -> new CollectionController.GridCellImage(setImageView, (file, e) -> {
+        gridUpload.setCellFactory(param -> new GridCellImage(setImageView, (file, e) -> {
             gridFiles.getItems().add(0, file);
             gridUpload.getItems().remove(file);
             if (gridUpload.getItems().isEmpty()) {
@@ -178,21 +181,42 @@ public class CollectionStageController {
 
     private void setServiceUploadFiles() {
         serviceUploadFiles = new ServiceUploadFiles(parent.getPath(CollectionImportedController.PATH));
-        serviceUploadFiles.setOnSucceeded(event -> this.clearGridUpload(null));
+        serviceUploadFiles.setOnSucceeded(event -> {
+            List<String> uploadedFileNames = gridUpload.getItems().stream().map(File::getName)
+                    .collect(Collectors.toList());
+            this.onUploadFinished(uploadedFileNames);
+        });
         serviceUploadFiles.setOnFailed(event -> {
             List<String> uploadedFileNames = serviceUploadFiles.getUploadedFileNames();
-            this.clearGridUpload(uploadedFileNames);
+            this.onUploadFinished(uploadedFileNames);
             parent.onServiceFailed(event);
         });
         uploadContainer.disableProperty().bind(serviceUploadFiles.runningProperty());
     }
 
     private void setServiceMoveFiles() {
-        serviceMoveFiles = new ServiceMoveFiles(parent.getPath(PATH));
+        serviceMoveFiles = parent.getServiceMoveFilesTo(PATH);
+        serviceMoveFiles.setFileNameBuilder(FileHelper::getMD5);
         serviceMoveFiles.setOnSucceeded(event -> {
             this.bindService(serviceReadFiles);
             serviceReadFiles.restart();
         });
+        serviceMoveFilesToEdit = parent.getServiceMoveFilesTo(CollectionEditController.PATH);
+        serviceMoveFilesToEdit.setOnSucceeded(e -> this.onSuccessMove(CollectionEditController.PATH, e));
+        serviceMoveFilesToTrash = parent.getServiceMoveFilesTo(CollectionTrashController.PATH);
+        serviceMoveFilesToTrash.setOnSucceeded(e -> this.onSuccessMove(CollectionTrashController.PATH, e));
+    }
+
+    private void onSuccessMove(String path, WorkerStateEvent e) {
+        gridFiles.getItems().remove(selectedFile);
+        this.clearImageView();
+        parent.addToGrid(path, (ServiceMoveFilesTo) e.getSource());
+    }
+
+    private void clearImageView() {
+        imageView.setImage(null);
+        selectedFile = null;
+        toolbar.setDisable(true);
     }
 
     private void buildUrlDialog() {
@@ -215,27 +239,18 @@ public class CollectionStageController {
         urlDialog = parent.dialogCustom(dialog);
     }
 
-    private void clearGridUpload(List<String> uploadedFileNames) {
-        String selectedFileName = selectedFile.getName();
-        boolean selectedFileUploaded;
-        if (uploadedFileNames == null) {
-            selectedFileUploaded = gridUpload.getItems().stream()
-                    .anyMatch(file -> file.getName().equals(selectedFileName));
+    private void onUploadFinished(List<String> uploadedFileNames) {
+        boolean selectedFileUploaded = uploadedFileNames.stream()
+                .anyMatch(selectedFile.getName()::equals);
+        if (selectedFileUploaded) {
+            this.clearImageView();
+        }
+        if (gridUpload.getItems().size() == uploadedFileNames.size()) {
             gridUpload.getItems().clear();
         } else {
-            selectedFileUploaded = uploadedFileNames.stream()
-                    .anyMatch(selectedFileName::equals);
-            gridUpload.getItems().removeIf(file -> {
-                String fileName = file.getName();
-                return uploadedFileNames.contains(fileName);
-            });
+            gridUpload.getItems().removeIf(file -> uploadedFileNames.contains(file.getName()));
         }
-        btnUpload.setDisable(gridUpload.getItems().isEmpty());
-        if (selectedFileUploaded) {
-            imageView.setImage(null);
-            selectedFile = null;
-            toolbar.setDisable(true);
-        }
+        parent.updateImportedFilesGrid(selectedCategory.getIdTag());
     }
 
     private void bindService(Service<?> service) {
@@ -262,27 +277,35 @@ public class CollectionStageController {
 
     @FXML
     public void btnEditOnClick(ActionEvent e) {
-
+        serviceMoveFilesToEdit.setSourceFile(selectedFile);
+        this.bindService(serviceMoveFilesToEdit);
+        serviceMoveFilesToEdit.restart();
     }
 
     @FXML
     public void btnTrashOnClick(ActionEvent e) {
-
+        serviceMoveFilesToTrash.setSourceFile(selectedFile);
+        this.bindService(serviceMoveFilesToTrash);
+        serviceMoveFilesToTrash.restart();
     }
 
     @FXML
     public void btnUploadOnClick(ActionEvent e) {
-        serviceUploadFiles.config(gridUpload.getItems(), selectedTag.getIdTag());
+        serviceUploadFiles.config(gridUpload.getItems(), selectedCategory.getIdTag());
         this.bindService(serviceUploadFiles);
         serviceUploadFiles.restart();
     }
 
     @FXML
-    public void btnGetFromUrlOnClick(ActionEvent event) {
+    public void btnGetFromUrlOnClick(ActionEvent e) {
         urlDialog.showAndWait().ifPresent(result -> {
             this.bindService(serviceGetImageFromUrl);
             serviceGetImageFromUrl.restart();
             ((TextInputDialog) urlDialog).getEditor().clear();
         });
+    }
+
+    void addToGrid(File file) {
+        gridFiles.getItems().add(file);
     }
 }

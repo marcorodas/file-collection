@@ -31,8 +31,10 @@ import org.controlsfx.control.SegmentedButton;
 import pe.mrodas.entity.Tag;
 import pe.mrodas.helper.FileHelper;
 import pe.mrodas.helper.TagBar;
+import pe.mrodas.worker.ServiceDeleteFileFromDB;
 import pe.mrodas.worker.ServiceGetFileNames;
 import pe.mrodas.worker.ServiceGetMissingFiles;
+import pe.mrodas.worker.ServiceMoveFilesTo;
 import pe.mrodas.worker.ServiceReadFiles;
 
 public class CollectionImportedController {
@@ -96,6 +98,8 @@ public class CollectionImportedController {
     private ServiceGetFileNames serviceGetFileNames;
     private ServiceReadFiles serviceReadFiles, serviceGetExistingFiles;
     private ServiceGetMissingFiles serviceGetMissingFiles;
+    private ServiceDeleteFileFromDB serviceDeleteFileFromDB = new ServiceDeleteFileFromDB();
+    private ServiceMoveFilesTo serviceMoveFilesToEdit, serviceMoveFilesToTrash;
     private CollectionController parent;
     private TagBar<Tag> tagBar;
     private Tag selectedCategory;
@@ -110,7 +114,7 @@ public class CollectionImportedController {
                     .setInputAutoCompeteTags(txtSearchTag, spinnerHolder)
                     .setNewTagWindow(config.getRoot().getIdRoot(), vBoxNewTag, txtNewTag);
             this.setServices();
-            config.buildCategoryButtons(categoriesButtons, this::onCategoryIsSelected);
+            parent.buildCategoryButtons(categoriesButtons, this::onCategoryIsSelected);
             tagBar = new TagBar<>(Tag::getName).setSuggestionProvider(hint -> {
                 List<Tag> tags = tagAssignWinCtrl.getTagList(config.getRoot(), hint, true);
                 if (selectedCategory != null) {
@@ -231,12 +235,26 @@ public class CollectionImportedController {
             this.bindService(serviceReadFiles);
             serviceReadFiles.restart();
         });
+        serviceMoveFilesToEdit = parent.getServiceMoveFilesTo(CollectionEditController.PATH);
+        serviceMoveFilesToEdit.setOnSucceeded(e -> {
+            parent.addToGrid(CollectionEditController.PATH, (ServiceMoveFilesTo) e.getSource());
+        });
+        serviceMoveFilesToTrash = parent.getServiceMoveFilesTo(CollectionTrashController.PATH);
+        serviceMoveFilesToTrash.setOnSucceeded(e -> {
+            parent.addToGrid(CollectionTrashController.PATH, (ServiceMoveFilesTo) e.getSource());
+        });
     }
 
     private void bindService(Service<?> service) {
         topPane.disableProperty().bind(service.runningProperty());
         splitPane.disableProperty().bind(service.runningProperty());
         progressController.bindService(service);
+    }
+
+    void updateImportedFilesGrid(int idCategory) {
+        if (selectedCategory != null && selectedCategory.getIdTag() == idCategory) {
+            this.onTagsUpdated();
+        }
     }
 
     @FXML
@@ -269,38 +287,59 @@ public class CollectionImportedController {
     }
 
     @FXML
-    public void btnNewTagOnClick(ActionEvent event) {
+    public void btnNewTagOnClick(ActionEvent e) {
         txtNewTag.setText(txtSearchTag.getText());
         vBoxNewTag.setVisible(true);
     }
 
     @FXML
-    public void btnSaveNewTagOnClick(ActionEvent event) {
+    public void btnSaveNewTagOnClick(ActionEvent e) {
         tagAssignWinCtrl.getTagWindowCtrl().save();
     }
 
     @FXML
-    public void btnCancelNewTagOnClick(ActionEvent event) {
+    public void btnCancelNewTagOnClick(ActionEvent e) {
         vBoxNewTag.setVisible(false);
     }
 
     @FXML
-    public void btnNoFilterOnClick(ActionEvent event) {
+    public void btnNoFilterOnClick(ActionEvent e) {
         tagBar.getTags().clear();
         this.onTagsUpdated();
     }
 
     @FXML
-    public void btnMissingOnClick(ActionEvent event) {
+    public void btnMissingOnClick(ActionEvent e) {
         this.bindService(serviceGetExistingFiles);
         serviceGetExistingFiles.restart();
     }
 
+    private void dbDeleteAndMoveFile(ServiceMoveFilesTo serviceMoveFilesTo) {
+        File selectedFile = tagImageViewCtrl.getSelectedFile();
+        String name = FileHelper.getName(selectedFile.getName());
+        serviceDeleteFileFromDB.setMd5(name);
+        serviceDeleteFileFromDB.setOnSucceeded(e -> {
+            tagImageViewCtrl.clean();
+            gridFiles.getItems().remove(selectedFile);
+            serviceMoveFilesTo.setSourceFile(selectedFile);
+            this.bindService(serviceMoveFilesTo);
+            serviceMoveFilesTo.restart();
+        });
+        this.bindService(serviceDeleteFileFromDB);
+        serviceDeleteFileFromDB.restart();
+    }
+
     @FXML
-    private void btnEditOnClick(ActionEvent event) {
+    private void btnEditOnClick(ActionEvent e) {
+        this.dbDeleteAndMoveFile(serviceMoveFilesToEdit);
     }
 
     @FXML
     private void btnTrashOnClick(ActionEvent event) {
+        this.dbDeleteAndMoveFile(serviceMoveFilesToTrash);
+    }
+
+    void addToGrid(File file) {
+        gridFiles.getItems().add(file);
     }
 }

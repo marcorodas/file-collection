@@ -4,16 +4,8 @@ import javafx.concurrent.Service;
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
-import javafx.scene.Node;
-import javafx.scene.control.Label;
 import javafx.scene.control.ToolBar;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.Clipboard;
-import javafx.scene.input.ClipboardContent;
-import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.VBox;
 import java.io.File;
 import java.util.List;
 import java.util.function.BiFunction;
@@ -21,10 +13,10 @@ import java.util.function.Consumer;
 
 import org.controlsfx.control.GridCell;
 import org.controlsfx.control.GridView;
-import org.controlsfx.control.PopOver;
 
 import pe.mrodas.entity.Tag;
 import pe.mrodas.helper.FileHelper;
+import pe.mrodas.helper.GridCellImage;
 import pe.mrodas.model.RestClient;
 import pe.mrodas.model.TagModel;
 
@@ -66,13 +58,21 @@ class TagImageViewCtrl {
     }
 
     void setSelectedCategory(Tag category) {
-        imageView.setImage(null);
-        toolbar.setDisable(true);
+        this.clean();
         assignTagWinCtrl.setSelectedCategoryId(category.getIdTag());
     }
 
     GridCell<File> getCellFactory(GridView<File> param) {
-        return new CollectionController.GridCellImage(this::onImageSingleClick, this::onImageDoubleClick);
+        return new GridCellImage(this::onImageSingleClick).setPathToClipboardOnDoubleClick();
+    }
+
+    File getSelectedFile() {
+        return selectedFile;
+    }
+
+    void clean() {
+        imageView.setImage(null);
+        toolbar.setDisable(true);
     }
 
     private void onImageSingleClick(File file) {
@@ -84,20 +84,6 @@ class TagImageViewCtrl {
                 selectedTags = null;
             }
         }
-    }
-
-    private void onImageDoubleClick(File file, MouseEvent e) {
-        ClipboardContent content = new ClipboardContent();
-        content.putString(file.getAbsolutePath());
-        Clipboard.getSystemClipboard().setContent(content);
-        Label text = new Label("Image Path Copied!");
-        VBox box = new VBox(text);
-        box.setAlignment(Pos.CENTER);
-        box.setPadding(new Insets(0, 20, 0, 20));
-        PopOver popOver = new PopOver(box);
-        popOver.setDetachable(false);
-        popOver.setArrowLocation(PopOver.ArrowLocation.TOP_CENTER);
-        popOver.show((Node) e.getSource(), -2);
     }
 
     void onSelectSegmentedBtn(boolean isBtnCategories) {
