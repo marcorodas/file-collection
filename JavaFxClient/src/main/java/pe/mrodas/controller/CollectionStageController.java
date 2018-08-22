@@ -115,7 +115,7 @@ public class CollectionStageController {
             if (selectedCategory != null) {
                 btnUpload.setDisable(false);
             }
-        }));
+        }).setContextMenuCopyImagePath());
         gridUpload.setItems(FXCollections.observableArrayList());
         gridUpload.itemsProperty().get().addListener((ListChangeListener<? super File>) c -> {
             int size = c.getList().size();
@@ -127,7 +127,7 @@ public class CollectionStageController {
             if (gridUpload.getItems().isEmpty()) {
                 btnUpload.setDisable(true);
             }
-        }));
+        }).setContextMenuCopyImagePath());
     }
 
     private void setServiceReadFiles(List<String> extensions) {

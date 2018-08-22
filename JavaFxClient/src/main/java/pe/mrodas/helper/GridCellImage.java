@@ -1,9 +1,11 @@
 package pe.mrodas.helper;
 
+import javafx.event.Event;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
+import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
+import javafx.scene.control.MenuItem;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.Clipboard;
@@ -32,7 +34,15 @@ public class GridCellImage extends GridCell<File> {
     }
 
     public GridCellImage setPathToClipboardOnDoubleClick() {
-        this.onMouseDoubleClick = this::onImageDoubleClick;
+        this.onMouseDoubleClick = this::copyImagePath;
+        return this;
+    }
+
+    public GridCellImage setContextMenuCopyImagePath() {
+        MenuItem item = new MenuItem("Copy image path");
+        item.setOnAction(e -> this.copyImagePath(this.getItem(), e));
+        ContextMenu menu = new ContextMenu(item);
+        this.setOnContextMenuRequested(e -> menu.show(this, e.getScreenX(), e.getScreenY()));
         return this;
     }
 
@@ -48,7 +58,7 @@ public class GridCellImage extends GridCell<File> {
         }
     }
 
-    private void onImageDoubleClick(File file, MouseEvent e) {
+    private void copyImagePath(File file, Event e) {
         ClipboardContent content = new ClipboardContent();
         content.putString(file.getAbsolutePath());
         Clipboard.getSystemClipboard().setContent(content);
@@ -59,7 +69,7 @@ public class GridCellImage extends GridCell<File> {
         PopOver popOver = new PopOver(box);
         popOver.setDetachable(false);
         popOver.setArrowLocation(PopOver.ArrowLocation.TOP_CENTER);
-        popOver.show((Node) e.getSource(), -2);
+        popOver.show(this, -2);
     }
 
     @Override
