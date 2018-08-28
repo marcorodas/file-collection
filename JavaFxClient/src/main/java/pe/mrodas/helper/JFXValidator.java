@@ -1,17 +1,21 @@
-package pe.wallet.imageprocess.util;
+package pe.mrodas.helper;
 
 import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXPasswordField;
+import com.jfoenix.controls.JFXTextField;
 import com.jfoenix.validation.base.ValidatorBase;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIconView;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import javafx.scene.Node;
 import javafx.scene.control.TextInputControl;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /**
- *
  * @author skynet
  */
 public class JFXValidator {
@@ -80,5 +84,20 @@ public class JFXValidator {
             hasErrors.set(val);
         }
 
+    }
+
+    public static class Directory extends ValidatorBase {
+
+        public Directory() {
+            super.setMessage("Invalid directory!");
+            super.setIcon(ICON);
+        }
+
+        @Override
+        protected void eval() {
+            JFXTextField textField = (JFXTextField) srcControl.get();
+            Path path = Paths.get(textField.getText());
+            hasErrors.set(!Files.isDirectory(path));
+        }
     }
 }

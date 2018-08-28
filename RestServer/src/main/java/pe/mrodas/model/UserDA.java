@@ -66,10 +66,10 @@ public class UserDA {
                 "   INNER JOIN person PER",
                 "       ON PER.idPerson = U.idPerson",
                 "   LEFT JOIN config C",
-                "       ON C.idCreator = U.idUser",
-                "       AND C.sysHostName = :sysHostName",
+                "       ON C.sysHostName = :sysHostName",
                 "       AND C.sysOsName = :sysOsName",
                 "       AND C.sysUserName = :sysUserName",
+                //"       AND C.idCreator = U.idUser",
                 "   WHERE U.username = :user AND U.password = :pass"
         }).addParameter("user", credential.getUsername());
         String pass = DigestUtils.sha256Hex(credential.getPassword());

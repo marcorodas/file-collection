@@ -1,5 +1,7 @@
 package pe.mrodas.controller;
 
+import com.jfoenix.controls.JFXPasswordField;
+import com.jfoenix.controls.JFXTextField;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
 import javafx.concurrent.WorkerStateEvent;
@@ -9,15 +11,11 @@ import javafx.scene.control.Button;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.VBox;
-
-import com.jfoenix.controls.JFXPasswordField;
-import com.jfoenix.controls.JFXTextField;
-import pe.wallet.imageprocess.util.JFXValidator;
-
 import pe.mrodas.MainApp;
 import pe.mrodas.entity.Credential;
 import pe.mrodas.entity.Environment;
 import pe.mrodas.entity.Session;
+import pe.mrodas.helper.JFXValidator;
 import pe.mrodas.model.LoginModel;
 import pe.mrodas.model.RestClient;
 
@@ -27,7 +25,7 @@ public class LoginController extends BaseController {
 
         private final Credential credential;
 
-        public TaskLogin(String user, String pass) {
+        TaskLogin(String user, String pass) {
             credential = new Credential()
                     .setUsername(user).setPassword(pass)
                     .setEnvironment(Environment.get());

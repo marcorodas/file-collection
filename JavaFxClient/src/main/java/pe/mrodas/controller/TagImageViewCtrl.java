@@ -6,19 +6,18 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.control.ToolBar;
 import javafx.scene.image.ImageView;
-import java.io.File;
-import java.util.List;
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
-
 import org.controlsfx.control.GridCell;
 import org.controlsfx.control.GridView;
-
 import pe.mrodas.entity.Tag;
 import pe.mrodas.helper.FileHelper;
 import pe.mrodas.helper.GridCellImage;
 import pe.mrodas.model.RestClient;
 import pe.mrodas.model.TagModel;
+
+import java.io.File;
+import java.util.List;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
 
 class TagImageViewCtrl {
     private final TagAssignWindowCtrl assignTagWinCtrl;
@@ -50,7 +49,7 @@ class TagImageViewCtrl {
         this.setFileToImageView = setFileToImageView;
     }
 
-    TagAssignWindowCtrl setConfig(CollectionController.Config config, EventHandler<ActionEvent> btnCancelOnClick, Consumer<Service<?>> bindService) {
+    TagAssignWindowCtrl setConfig(ConfigCtrl config, EventHandler<ActionEvent> btnCancelOnClick, Consumer<Service<?>> bindService) {
         this.bindService = bindService;
         serviceGetTags.setOnFailed(config.getParent()::onServiceFailed);
         assignTagWinCtrl.setConfig(config, btnCancelOnClick, bindService);

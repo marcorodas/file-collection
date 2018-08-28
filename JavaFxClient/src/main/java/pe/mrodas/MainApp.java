@@ -1,8 +1,17 @@
 package pe.mrodas;
 
+import com.google.gson.Gson;
 import javafx.application.Application;
 import javafx.scene.control.Alert;
 import javafx.stage.Stage;
+import okhttp3.ResponseBody;
+import pe.mrodas.controller.LoginController;
+import pe.mrodas.entity.Session;
+import pe.mrodas.helper.ExceptionAlert;
+import pe.mrodas.model.RestClient;
+import pe.mrodas.model.RestServerException;
+import pe.mrodas.rest.ApiError;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,16 +20,6 @@ import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
-
-import com.google.gson.Gson;
-import okhttp3.ResponseBody;
-
-import pe.mrodas.controller.LoginController;
-import pe.mrodas.entity.Session;
-import pe.mrodas.helper.ExceptionAlert;
-import pe.mrodas.model.RestClient;
-import pe.mrodas.model.RestServerException;
-import pe.mrodas.rest.ApiError;
 
 public class MainApp extends Application {
 
@@ -67,7 +66,7 @@ public class MainApp extends Application {
             Properties urlProperties = new Properties();
             urlProperties.load(file);
             return urlProperties.getProperty("url");
-        } catch (IOException e) {
+        } catch (Exception e) {
             return "http://localhost:9090/file-collection/rest/";
         }
     }

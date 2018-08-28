@@ -2,9 +2,7 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.layout.BorderPane?>
-<?import javafx.scene.layout.FlowPane?>
-
+<?import javafx.scene.layout.*?>
 <BorderPane xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="pe.mrodas.controller.MenuController">
     <center>
@@ -25,4 +23,7 @@
             </BorderPane.margin>
         </Label>
     </top>
+    <bottom>
+        <fx:include fx:id="progress" source="ProgressPane.fxml"/>
+    </bottom>
 </BorderPane>

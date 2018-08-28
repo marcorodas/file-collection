@@ -7,19 +7,22 @@ import javafx.concurrent.Service;
 import javafx.concurrent.WorkerStateEvent;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.control.Button;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.Dialog;
-import javafx.scene.control.Label;
-import javafx.scene.control.SplitPane;
-import javafx.scene.control.TextField;
-import javafx.scene.control.TextInputDialog;
-import javafx.scene.control.ToolBar;
+import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
+import lombok.Getter;
+import org.controlsfx.control.GridView;
+import pe.mrodas.entity.Tag;
+import pe.mrodas.helper.FileHelper;
+import pe.mrodas.helper.GridCellImage;
+import pe.mrodas.worker.ServiceGetImageFromUrl;
+import pe.mrodas.worker.ServiceMoveFilesTo;
+import pe.mrodas.worker.ServiceReadFiles;
+import pe.mrodas.worker.ServiceUploadFiles;
+
 import java.io.File;
 import java.io.FileFilter;
 import java.nio.file.FileAlreadyExistsException;
@@ -27,18 +30,6 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-
-import lombok.Getter;
-import org.controlsfx.control.GridView;
-
-import pe.mrodas.entity.Tag;
-import pe.mrodas.helper.FileHelper;
-import pe.mrodas.helper.GridCellImage;
-import pe.mrodas.worker.ServiceGetCategories;
-import pe.mrodas.worker.ServiceGetImageFromUrl;
-import pe.mrodas.worker.ServiceMoveFilesTo;
-import pe.mrodas.worker.ServiceReadFiles;
-import pe.mrodas.worker.ServiceUploadFiles;
 
 
 public class CollectionStageController {
@@ -70,9 +61,8 @@ public class CollectionStageController {
 
     static final String PATH = "stage";
     @Getter
-    private final SimpleObjectProperty<CollectionController.Config> configProperty = new SimpleObjectProperty<>();
+    private final SimpleObjectProperty<ConfigCtrl> configProperty = new SimpleObjectProperty<>();
     private CollectionController parent;
-    private Service<List<Tag>> serviceGetCategories;
     private ServiceReadFiles serviceReadFiles;
     private ServiceGetImageFromUrl serviceGetImageFromUrl;
     private ServiceUploadFiles serviceUploadFiles;
@@ -84,12 +74,11 @@ public class CollectionStageController {
     public void initialize() {
         configProperty.addListener((o, old, config) -> {
             parent = config.getParent();
-            parent.buildCategoryButtons(tagButtons, category -> {
+            config.buildCategoryButtons(tagButtons, category -> {
                 btnUpload.setDisable(category == null || gridUpload.getItems().isEmpty());
                 selectedCategory = category;
             });
-            this.setServiceReadFiles(config.getExtensions());
-            this.setServiceGetCategories(config);
+            this.setServiceReadFiles(config.getFileFilter());
             this.setServiceGetImageFromUrl();
             this.setServiceUploadFiles();
             this.setServiceMoveFiles();
@@ -130,10 +119,7 @@ public class CollectionStageController {
         }).setContextMenuCopyImagePath());
     }
 
-    private void setServiceReadFiles(List<String> extensions) {
-        FileFilter filter = (extensions == null) ? null : file -> extensions.stream()
-                .map(s -> s.replace("*", ""))
-                .anyMatch(s -> file.getName().endsWith(s));
+    private void setServiceReadFiles(FileFilter filter) {
         serviceReadFiles = new ServiceReadFiles(parent.getPath(PATH), filter);
         serviceReadFiles.setOnSucceeded(event -> {
             List<File> files = serviceReadFiles.getValue();
@@ -148,18 +134,6 @@ public class CollectionStageController {
                 int size = gridFiles.getItems().size();
                 parent.setNumFiles(lblTotal, size);
             });
-            if (tagButtons.getChildren().isEmpty()) {
-                this.bindService(serviceGetCategories);
-                serviceGetCategories.restart();
-            }
-        });
-    }
-
-    private void setServiceGetCategories(CollectionController.Config config) {
-        serviceGetCategories = new ServiceGetCategories(config.getRoot().getIdRoot());
-        serviceGetCategories.setOnSucceeded(event -> {
-            List<Tag> tags = serviceGetCategories.getValue();
-            config.getTagListProperty().set(tags);
         });
     }
 
@@ -263,9 +237,8 @@ public class CollectionStageController {
 
     @FXML
     public void btnGetFilesOnClick(ActionEvent actionEvent) {
-        FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("Images", configProperty.get().getExtensions());
         FileChooser chooser = new FileChooser();
-        chooser.getExtensionFilters().add(extFilter);
+        chooser.getExtensionFilters().add(configProperty.get().getExtensionFilter());
         chooser.setTitle("Import Images");
         List<File> files = chooser.showOpenMultipleDialog(parent.getStage(actionEvent));
         if (files != null && !files.isEmpty()) {

@@ -2,18 +2,16 @@ package pe.mrodas.worker;
 
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
-import java.util.List;
-
+import lombok.Setter;
 import pe.mrodas.entity.Tag;
 import pe.mrodas.model.RestClient;
 import pe.mrodas.model.TagModel;
 
-public class ServiceGetCategories extends Service<List<Tag>> {
-    private final int idRoot;
+import java.util.List;
 
-    public ServiceGetCategories(int idRoot) {
-        this.idRoot = idRoot;
-    }
+public class ServiceGetCategories extends Service<List<Tag>> {
+    @Setter
+    private int idRoot;
 
     @Override
     protected Task<List<Tag>> createTask() {

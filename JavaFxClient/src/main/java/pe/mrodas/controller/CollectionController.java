@@ -8,40 +8,20 @@ import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.SplitPane;
-import javafx.scene.control.ToggleButton;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.security.InvalidParameterException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.List;
-import java.util.function.Consumer;
-
-import lombok.Data;
 import lombok.Getter;
-import org.controlsfx.control.SegmentedButton;
-
-import pe.mrodas.MainApp;
-import pe.mrodas.entity.Root;
-import pe.mrodas.entity.Tag;
 import pe.mrodas.helper.GuiHelper;
 import pe.mrodas.worker.ServiceMoveFilesTo;
 
-public class CollectionController extends BaseController {
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
-    @Data
-    static class Config {
-        private final CollectionController parent;
-        private final Root root;
-        private final List<String> extensions;
-        private final SimpleObjectProperty<List<Tag>> tagListProperty = new SimpleObjectProperty<>();
-    }
+public class CollectionController extends BaseController {
 
     @FXML
     private CollectionStageController collectionStageController;
@@ -53,34 +33,19 @@ public class CollectionController extends BaseController {
     private CollectionTrashController collectionTrashController;
 
     @Getter
-    private final SimpleObjectProperty<Config> configProperty = new SimpleObjectProperty<>();
-    private Path rootDir;
+    private final SimpleObjectProperty<ConfigCtrl> configProperty = new SimpleObjectProperty<>();
 
     public CollectionController() {
         super("/fxml/Collection.fxml");
     }
 
-    Stage prepareStage(Root root, List<String> extensions, Node node) throws IOException {
-        this.checkRoot(root);
+    Stage prepareStage(ConfigCtrl config, Node node) throws IOException {
+        config.checkRoot();
         super.<CollectionController>setOnControllerReady(ctrl -> {
-            ctrl.setRootDir(root);
-            Config config = new Config(ctrl, root, extensions);
+            config.setParent(ctrl);
             ctrl.getConfigProperty().set(config);
         });
         return super.prepareStage(node);
-    }
-
-    private void checkRoot(Root root) {
-        if (root == null) {
-            throw new InvalidParameterException("root can't be null");
-        }
-        if ((root.getIdRoot() == null ? 0 : root.getIdRoot()) <= 0) {
-            throw new InvalidParameterException("idRoot must be greater than zero");
-        }
-    }
-
-    private void setRootDir(Root root) {
-        rootDir = Paths.get(MainApp.getSession().getWorkingDir(), root.getName());
     }
 
     @Override
@@ -94,7 +59,7 @@ public class CollectionController extends BaseController {
     }
 
     Path getPath(String folder) {
-        return rootDir.resolve(folder);
+        return configProperty.get().getPath(folder);
     }
 
     void setNumFiles(Label label, int size) {
@@ -133,22 +98,6 @@ public class CollectionController extends BaseController {
 
     void updateImportedFilesGrid(int idCategory) {
         collectionImportedController.updateImportedFilesGrid(idCategory);
-    }
-
-    void buildCategoryButtons(HBox btnsContainer, Consumer<Tag> onTagSelected) {
-        configProperty.get().getTagListProperty().addListener((o, old, tagList) -> {
-            ToggleButton[] buttons = tagList.stream().map(tag -> {
-                ToggleButton toggle = new ToggleButton(tag.getName());
-                toggle.setUserData(tag);
-                return toggle;
-            }).toArray(ToggleButton[]::new);
-            SegmentedButton groupBtns = new SegmentedButton(buttons);
-            btnsContainer.getChildren().setAll(groupBtns);
-            groupBtns.getToggleGroup().selectedToggleProperty().addListener((obs, oldToggle, toggle) -> {
-                Tag tag = toggle == null ? null : (Tag) toggle.getUserData();
-                onTagSelected.accept(tag);
-            });
-        });
     }
 
     static boolean setImageView(ImageView imageView, File file, double height, SplitPane splitPane) {

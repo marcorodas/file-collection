@@ -12,18 +12,17 @@ import javafx.scene.control.SplitPane;
 import javafx.scene.control.ToolBar;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
-import java.io.File;
-import java.io.FileFilter;
-import java.util.List;
-
 import lombok.Getter;
 import org.controlsfx.control.GridView;
-
 import pe.mrodas.MainApp;
 import pe.mrodas.helper.FileHelper;
 import pe.mrodas.helper.GridCellImage;
 import pe.mrodas.worker.ServiceMoveFilesTo;
 import pe.mrodas.worker.ServiceReadFiles;
+
+import java.io.File;
+import java.io.FileFilter;
+import java.util.List;
 
 public class CollectionEditController {
     @FXML
@@ -43,7 +42,7 @@ public class CollectionEditController {
 
     static final String PATH = "edit";
     @Getter
-    private final SimpleObjectProperty<CollectionController.Config> configProperty = new SimpleObjectProperty<>();
+    private final SimpleObjectProperty<ConfigCtrl> configProperty = new SimpleObjectProperty<>();
     private CollectionController parent;
     private File selectedFile;
     private ServiceReadFiles serviceReadFiles;
@@ -53,7 +52,7 @@ public class CollectionEditController {
         configProperty.addListener((o, old, config) -> {
             parent = config.getParent();
             this.setServicesMoveTo();
-            this.setServiceReadFiles(config.getExtensions());
+            this.setServiceReadFiles(config.getFileFilter());
             this.bindService(serviceReadFiles);
             serviceReadFiles.restart();
         });
@@ -78,10 +77,7 @@ public class CollectionEditController {
         serviceMoveFilesToTrash.setOnSucceeded(e -> this.onSuccessMove(CollectionTrashController.PATH, e));
     }
 
-    private void setServiceReadFiles(List<String> extensions) {
-        FileFilter filter = (extensions == null) ? null : file -> extensions.stream()
-                .map(s -> s.replace("*", ""))
-                .anyMatch(s -> file.getName().endsWith(s));
+    private void setServiceReadFiles(FileFilter filter) {
         serviceReadFiles = new ServiceReadFiles(parent.getPath(PATH), filter);
         serviceReadFiles.setOnSucceeded(event -> {
             List<File> files = serviceReadFiles.getValue();

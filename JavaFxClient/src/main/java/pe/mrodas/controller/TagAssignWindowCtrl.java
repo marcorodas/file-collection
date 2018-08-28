@@ -11,16 +11,7 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
-
 import org.controlsfx.control.GridView;
-
 import pe.mrodas.entity.Root;
 import pe.mrodas.entity.Tag;
 import pe.mrodas.entity.TagListsToSave;
@@ -29,6 +20,14 @@ import pe.mrodas.helper.TagBar;
 import pe.mrodas.model.RestClient;
 import pe.mrodas.model.TagModel;
 import pe.mrodas.worker.ServiceSaveTagList;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 class TagAssignWindowCtrl {
 
@@ -40,7 +39,7 @@ class TagAssignWindowCtrl {
 
     private int selectedCategoryId;
     private Consumer<Service<?>> bindService;
-    private CollectionController.Config config;
+    private ConfigCtrl config;
     private EventHandler<ActionEvent> btnCancelOnClick;
 
     private final ServiceSaveTagList serviceSaveTagList = new ServiceSaveTagList();
@@ -63,19 +62,17 @@ class TagAssignWindowCtrl {
         return this.vBoxImageProperties.visibleProperty();
     }
 
-    void setConfig(CollectionController.Config config, EventHandler<ActionEvent> btnCancelOnClick, Consumer<Service<?>> bindService) {
+    void setConfig(ConfigCtrl config, EventHandler<ActionEvent> btnCancelOnClick, Consumer<Service<?>> bindService) {
         this.config = config;
         this.btnCancelOnClick = btnCancelOnClick;
         this.bindService = bindService;
         serviceSaveTagList.setOnFailed(config.getParent()::onServiceFailed);
-        config.getTagListProperty().addListener((o, old, categories) -> {
-            for (Tag category : categories) {
-                categoriesId.add(category.getIdTag());
-                CheckBox checkBox = new CheckBox(category.getName());
-                checkBox.setUserData(category);
-                vBoxCategories.getChildren().add(checkBox);
-            }
-        });
+        for (Tag category : config.getCategories()) {
+            categoriesId.add(category.getIdTag());
+            CheckBox checkBox = new CheckBox(category.getName());
+            checkBox.setUserData(category);
+            vBoxCategories.getChildren().add(checkBox);
+        }
     }
 
     TagAssignWindowCtrl setInputAutoCompeteTags(TextField txtSearchTag, HBox spinnerHolder) {

@@ -5,37 +5,25 @@ import javafx.collections.FXCollections;
 import javafx.concurrent.Service;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.control.Button;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.Label;
-import javafx.scene.control.SplitPane;
-import javafx.scene.control.TextField;
-import javafx.scene.control.Toggle;
-import javafx.scene.control.ToggleButton;
-import javafx.scene.control.ToolBar;
+import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import lombok.Getter;
+import org.controlsfx.control.GridView;
+import org.controlsfx.control.SegmentedButton;
+import pe.mrodas.entity.Tag;
+import pe.mrodas.helper.FileHelper;
+import pe.mrodas.helper.TagBar;
+import pe.mrodas.worker.*;
+
 import java.io.File;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import lombok.Getter;
-import org.controlsfx.control.GridView;
-import org.controlsfx.control.SegmentedButton;
-
-import pe.mrodas.entity.Tag;
-import pe.mrodas.helper.FileHelper;
-import pe.mrodas.helper.TagBar;
-import pe.mrodas.worker.ServiceDeleteFileFromDB;
-import pe.mrodas.worker.ServiceGetFileNames;
-import pe.mrodas.worker.ServiceGetMissingFiles;
-import pe.mrodas.worker.ServiceMoveFilesTo;
-import pe.mrodas.worker.ServiceReadFiles;
 
 public class CollectionImportedController {
 
@@ -93,7 +81,7 @@ public class CollectionImportedController {
     private ProgressController progressController;
 
     @Getter
-    private final SimpleObjectProperty<CollectionController.Config> configProperty = new SimpleObjectProperty<>();
+    private final SimpleObjectProperty<ConfigCtrl> configProperty = new SimpleObjectProperty<>();
     static final String PATH = "cache";
     private ServiceGetFileNames serviceGetFileNames;
     private ServiceReadFiles serviceReadFiles, serviceGetExistingFiles;
@@ -110,11 +98,11 @@ public class CollectionImportedController {
     public void initialize() {
         configProperty.addListener((o, old, config) -> {
             parent = config.getParent();
+            config.buildCategoryButtons(categoriesButtons, this::onCategoryIsSelected);
             tagImageViewCtrl.setConfig(config, this::btnCancelOnClick, this::bindService)
                     .setInputAutoCompeteTags(txtSearchTag, spinnerHolder)
                     .setNewTagWindow(config.getRoot().getIdRoot(), vBoxNewTag, txtNewTag);
             this.setServices();
-            parent.buildCategoryButtons(categoriesButtons, this::onCategoryIsSelected);
             tagBar = new TagBar<>(Tag::getName).setSuggestionProvider(hint -> {
                 List<Tag> tags = tagAssignWinCtrl.getTagList(config.getRoot(), hint, true);
                 if (selectedCategory != null) {

@@ -5,5 +5,5 @@ import lombok.Data;
 @Data
 public class Root {
     private Integer idRoot;
-    private String name, imageUrl;
+    private String name, imageUrl, mediaType;
 }
