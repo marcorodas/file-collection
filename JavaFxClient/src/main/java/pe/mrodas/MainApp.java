@@ -78,9 +78,6 @@ public class MainApp extends Application {
     private Alert onException(Throwable e, Boolean debugMode) {
         boolean debug = Boolean.TRUE.equals(debugMode);
         if (debug) {
-            if (e instanceof RestServerException) {
-                ((RestServerException) e).setPackageFilter("pe.mrodas");
-            }
             Logger.getLogger("File Collector").log(Level.SEVERE, e.getClass().getName(), e);
         }
         return new ExceptionAlert(e, debug);
@@ -90,7 +87,7 @@ public class MainApp extends Application {
         try {
             ApiError apiError = new Gson().fromJson(body.string(), ApiError.class);
             return new RestServerException(modelName, url, apiError.getMessage())
-                    .setServerTrace(apiError.getTrace());
+                    .setServerTrace(apiError.getTrace("pe.mrodas"));
         } catch (IOException e) {
             return new RestServerException("Error Reading Server Error:\n" + e.getMessage(), e, modelName, url);
         }

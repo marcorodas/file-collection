@@ -142,7 +142,7 @@
         <dependency>
             <groupId>com.github.marcorodas</groupId>
             <artifactId>api-error</artifactId>
-            <version>8c5667f</version>
+            <version>4d5c3f396b</version>
         </dependency>
         <!-- Test -->
         <dependency>

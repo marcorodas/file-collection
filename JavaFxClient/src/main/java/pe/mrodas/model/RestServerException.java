@@ -1,11 +1,10 @@
 package pe.mrodas.model;
 
+import lombok.Setter;
+import lombok.experimental.Accessors;
 import okhttp3.ResponseBody;
 
-import java.util.Arrays;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
+@Accessors(chain = true)
 public class RestServerException extends Exception {
 
     public interface Handler {
@@ -13,7 +12,8 @@ public class RestServerException extends Exception {
     }
 
     private final String modelName, url;
-    private String serverTrace, packageFilter;
+    @Setter
+    private String serverTrace;
 
     public RestServerException(String modelName, String url, String serverMsj) {
         super(serverMsj);
@@ -27,42 +27,13 @@ public class RestServerException extends Exception {
         this.url = url;
     }
 
-    public RestServerException setServerTrace(String serverTrace) {
-        this.serverTrace = serverTrace;
-        return this;
-    }
-
-    public void setPackageFilter(String packageFilter) {
-        this.packageFilter = packageFilter;
-    }
-
-    private Stream<String> getFilteredTrace(String[] traceElements) {
-        Stream<String> stream = Arrays.stream(traceElements);
-        if (packageFilter == null) {
-            return stream;
-        }
-        return stream.filter(this::filterByPackage);
-    }
-
-    private boolean filterByPackage(String input) {
-        String trimed = input.trim();
-        if (trimed.startsWith("at")) {
-            return trimed.startsWith("at " + packageFilter);
-        }
-        return true;
-    }
-
     @Override
     public String toString() {
         String str = String.format("\tModel: %s\n\tUrl: %s", modelName, url);
         if (serverTrace != null) {
-            String trace = this.getFilteredTrace(serverTrace.split("\n"))
-                    .map(s -> "\t\t" + s)
-                    .collect(Collectors.joining("\n"));
-            str += String.format("\n\tServer Trace:\n%s\n", trace);
+            str = String.format("%s\n\tServer Trace:\n%s\n", str, serverTrace);
         }
         return "RestServerException:\n" + str;
     }
-
 
 }
